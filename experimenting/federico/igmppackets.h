@@ -1,7 +1,7 @@
 #ifndef CLICK_IGMPPACKETS_H
 #define CLICK_IGMPPACKETS_H
 
-#include <stdint.h>
+// #include <stdint.h>
 
 
 struct IGMP_query {
