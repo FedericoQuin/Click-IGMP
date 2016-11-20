@@ -31,4 +31,7 @@
 # experimenting federico click compiled objects etc
 
 experimenting/federico/click-2.0.1/*
-!experimenting/federico/click-2.0.1/elements/local/*
+!experimenting/federico/click-2.0.1/elements/
+
+experimenting/federico/click-2.0.1/elements/*
+!experimenting/federico/click-2.0.1/elements/local/
