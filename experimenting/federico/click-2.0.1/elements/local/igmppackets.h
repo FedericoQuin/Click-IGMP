@@ -10,9 +10,9 @@ struct IGMP_query {
     uint16_t Checksum;
     uint32_t Group_Address;
 
-    uint8_t Resv : 4;
-    uint8_t S : 1;
     uint8_t QRV : 3;
+    uint8_t S : 1;
+    uint8_t Resv : 4;
 
     uint8_t QQIC;
     uint16_t Number_of_Sources;

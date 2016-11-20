@@ -26,7 +26,7 @@ private:
 	Packet* make_packet();
 	unsigned int f_mrc;
 	unsigned int f_qrv;
-	unsigned int f_qqiv;
+	unsigned int f_qqic;
 };
 
 CLICK_ENDDECLS

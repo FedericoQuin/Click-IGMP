@@ -13,7 +13,7 @@
 
 CLICK_DECLS
 
-IGMPQuery::IGMPQuery() : f_mrc(0), f_qrv(0), f_qqiv(0) {}
+IGMPQuery::IGMPQuery() : f_mrc(0), f_qrv(0), f_qqic(0) {}
 
 IGMPQuery::~IGMPQuery() {}
 
@@ -22,7 +22,7 @@ int IGMPQuery::configure(Vector<String>& conf, ErrorHandler* errh) {
 	if ( cp_va_kparse(conf, this, errh,
 		"MRC", cpkM + cpkP, cpUnsigned, &f_mrc,
 		"QRV", 0, cpUnsigned, &f_qrv,
-		"QQIV", 0, cpUnsigned, &f_qqiv,
+		"QQIC", 0, cpUnsigned, &f_qqic,
 	cpEnd) < 0 ) return -1;
 
 	Timer* timer = new Timer(this);
@@ -49,12 +49,12 @@ Packet* IGMPQuery::make_packet() {
 	IGMP_query* igmph = (IGMP_query*)(q->data());
 
 	igmph->Type = 0x11;
-	igmph->Max_Resp_Code = 127;
+	igmph->Max_Resp_Code = f_mrc;
 	igmph->Group_Address = 0;
 	igmph->Resv = 0;
 	igmph->S = 0;
-	igmph->QRV = 0;
-	igmph->QQIC = 0;
+	igmph->QRV = f_qrv;
+	igmph->QQIC = f_qqic;
 	igmph->Number_of_Sources = 0;
 	igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeof(IGMP_query));
 
