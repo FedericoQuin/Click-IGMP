@@ -24,7 +24,8 @@ elementclass Router {
 					$client2_address:ip/32 0,
 					$server_address:ipnet 1,
 					$client1_address:ipnet 2,
-					$client2_address:ipnet 3);
+					$client2_address:ipnet 3,
+					255.255.255.255/0 4);
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
@@ -49,6 +50,7 @@ elementclass Router {
 
 	// Input and output paths for interface 1
 	input[1]
+		-> ToDump(foo.dump)
 		-> HostEtherFilter($client1_address)
 		-> client1_class :: Classifier(12/0806 20/0001, 12/0806 20/0002, -)
 		-> ARPResponder($client1_address)
@@ -164,5 +166,19 @@ elementclass Router {
 	client2_frag[1]
 		-> ICMPError($client2_address, unreachable, needfrag)
 		-> rt;
+
+	rt[4] 
+		-> IPClass::IPClassifier(ip proto IGMP,-)
+		-> Strip(20)
+		-> checker::CheckIGMPHeader
+
+		//DIT MOET NOG HANDELEN
+		-> ToDump(checked.dump)
+
+		IPClass[1]
+			-> Discard
+
+		checker[1]
+			-> Discard
 }
 

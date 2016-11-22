@@ -47,4 +47,9 @@ elementclass Client {
 	
 	in_cl[2]
 		-> ip;
+
+	reportSource::IGMPReport()
+		-> IPEncap(2, $address, 224.0.0.22, TTL 1)
+		-> CheckIPHeader()
+		-> arpq
 }
