@@ -45,7 +45,8 @@ Packet* IGMPQuery::make_packet() {
 	if (!q)
 		return 0;
 	
-	memset(q->data(), '\0', sizeof(struct IGMP_query));
+	// memset(q->data(), '\0', sizeof(struct IGMP_query));
+	memset(q->data(), '\0', q->length());
 	IGMP_query* igmph = (IGMP_query*)(q->data());
 
 	igmph->Type = 0x11;
