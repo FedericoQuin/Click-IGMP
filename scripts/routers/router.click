@@ -12,6 +12,8 @@
 //	[2]: packets sent to the 192.168.3.0/24 network
 //  [3]: packets destined for the router itself
 
+table::RouterInfoBase
+
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
@@ -169,9 +171,7 @@ elementclass Router {
 	rt[4] 
 		-> IPClass::IPClassifier(ip proto IGMP,-)
 		-> checker::CheckIGMPHeader
-
-		//DIT MOET NOG HANDELEN
-		-> ToDump(checked.dump)
+		-> IGMPReportReceiver(INFOBASE table)
 
 		IPClass[1]
 			-> Discard

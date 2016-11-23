@@ -36,7 +36,7 @@ void CheckIGMPHeader::push(int, Packet *p){
 
 	IGMP_report* igmphr = (IGMP_report*)(p->data()+p->ip_header_length());
 	bool succesR = false;
-	if (igmphq != 0){
+	if (igmphr != 0){
 		if (igmphq->Type == 0x22){
 			succesR = checkReport(p);
 		}
@@ -67,7 +67,8 @@ bool CheckIGMPHeader::checkQuery(Packet *p){
 bool CheckIGMPHeader::checkReport(Packet *p){
 	uint32_t hlength = p->ip_header_length();
 	IGMP_report* igmph = (IGMP_report*)(p->data()+hlength);
-	if(p->length() - hlength>sizeof(IGMP_report)){
+	uint16_t number = ntohs(igmph->Number_of_Group_Records);
+	if(p->length() - hlength>sizeof(IGMP_report)+number*sizeof(IGMP_grouprecord)){
 		return false;
 	}
 
