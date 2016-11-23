@@ -6,6 +6,7 @@
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
 #include <click/timer.hh>
+#include <click/ipaddress.hh>
 
 CLICK_DECLS
 
@@ -25,6 +26,8 @@ public:
 
 private:
     Packet* make_packet();
+
+    Vector<IPAddress> f_listenAddresses;
 
 };
 

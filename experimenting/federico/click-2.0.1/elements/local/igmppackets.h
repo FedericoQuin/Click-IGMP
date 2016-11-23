@@ -4,6 +4,7 @@
 // #include <stdint.h>
 
 
+#define IGMP_QUERY_TYPE 0x11
 struct IGMP_query {
     uint8_t Type;
     uint8_t Max_Resp_Code;
@@ -18,6 +19,7 @@ struct IGMP_query {
     uint16_t Number_of_Sources;
 };
 
+#define IGMP_REPORT_TYPE 0x22
 struct IGMP_report {
     uint8_t Type;
     uint8_t Reserved1;
@@ -25,6 +27,11 @@ struct IGMP_report {
     uint16_t Reserved2;
     uint16_t Number_of_Group_Records;
 };
+
+#define RECORD_TYPE_MODE_IN 1
+#define RECORD_TYPE_MODE_EX 2
+#define RECORD_TYPE_EX_TO_IN 3
+#define RECORD_TYPE_IN_TO_EX 4
 
 struct IGMP_grouprecord {
     uint8_t Record_Type;

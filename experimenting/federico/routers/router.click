@@ -50,6 +50,7 @@ elementclass Router {
 	// Input and output paths for interface 1
 	input[1]
 		-> HostEtherFilter($client1_address)
+		-> ToDump(dumps/receivedPacketsRouter.dump)
 		-> client1_class :: Classifier(12/0806 20/0001, 12/0806 20/0002, -)
 		-> ARPResponder($client1_address)
 		-> [1]output;
