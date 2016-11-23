@@ -20,6 +20,8 @@ elementclass Router {
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 		-> CheckIPHeader
+		-> IGMPDistributor(INFOBASE table)
+		-> SetIPChecksum
 		-> rt :: StaticIPLookup(
 					$server_address:ip/32 0,
 					$client1_address:ip/32 0,
@@ -170,13 +172,15 @@ elementclass Router {
 
 	rt[4] 
 		-> IPClass::IPClassifier(ip proto IGMP,-)
+		-> ToDump(BefCheck.dump)
 		-> checker::CheckIGMPHeader
 		-> IGMPReportReceiver(INFOBASE table)
 
 		IPClass[1]
 			-> Discard
-
+		
 		checker[1]
 			-> Discard
+		
 }
 

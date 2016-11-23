@@ -36,17 +36,17 @@ void IGMPReportReceiver::push(int, Packet *p){
 
 	uint16_t number = ntohs(igmp->Number_of_Group_Records);
 
-	char buf[256];
-	click_chatter(buf);
-
 	for(uint16_t i = 0; i < number; i++){
 		IGMP_grouprecord* record = (IGMP_grouprecord*)(p->data()+p->ip_header_length()+sizeof(IGMP_report)+i*sizeof(IGMP_grouprecord));
 		IPAddress groupAddess = record->Multicast_Address;
-		uint8_t type = ntohs(record->Record_Type);
-		if(type == 1){
+		uint8_t type = record->Record_Type;
+		if(type == RECORD_TYPE_IN_TO_EX){
 			infoBase->addIPToGroup(groupAddess,source);
+			click_chatter(groupAddess.s().c_str());
+			click_chatter(source.s().c_str());
+			click_chatter("join");
 		}
-		else if(type ==2){
+		else if(type == RECORD_TYPE_EX_TO_IN){
 			infoBase->deleteIPFromGroup(groupAddess,source);
 		}
 
