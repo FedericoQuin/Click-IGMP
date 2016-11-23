@@ -50,7 +50,6 @@ elementclass Router {
 
 	// Input and output paths for interface 1
 	input[1]
-		-> ToDump(foo.dump)
 		-> HostEtherFilter($client1_address)
 		-> client1_class :: Classifier(12/0806 20/0001, 12/0806 20/0002, -)
 		-> ARPResponder($client1_address)
@@ -169,7 +168,6 @@ elementclass Router {
 
 	rt[4] 
 		-> IPClass::IPClassifier(ip proto IGMP,-)
-		-> Strip(20)
 		-> checker::CheckIGMPHeader
 
 		//DIT MOET NOG HANDELEN
