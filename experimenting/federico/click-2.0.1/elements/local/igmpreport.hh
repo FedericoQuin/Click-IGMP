@@ -10,7 +10,6 @@
 
 CLICK_DECLS
 
-//temporarily just a dummy packet creater
 class IGMPReport : public Element {
 public:
     IGMPReport();
@@ -21,12 +20,19 @@ public:
     const char* processing() const { return PUSH; }
     int configure(Vector<String>&, ErrorHandler*);
 
+    // timer still here for debugging reasons
     void run_timer(Timer*);
+
+    /// --------
+    /// HANDLERS
+    /// --------
+    static int handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+    static int handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+    void add_handlers();
 
 
 private:
-    Packet* make_packet();
-
+    Packet* make_packet(int groupRecordProto = 1, IPAddress changedIP = IPAddress());
     Vector<IPAddress> f_listenAddresses;
 
 };
