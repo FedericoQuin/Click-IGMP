@@ -7,6 +7,7 @@
 #include <clicknet/ether.h>
 #include <click/timer.hh>
 #include <click/ipaddress.hh>
+#include "clientinfobase.hh"
 
 CLICK_DECLS
 
@@ -55,7 +56,7 @@ public:
 
 private:
     Packet* make_packet(int groupRecordProto = 1, IPAddress changedIP = IPAddress());
-    Vector<IPAddress> f_listenAddresses;
+    ClientInfoBase* clientState;
 
 };
 

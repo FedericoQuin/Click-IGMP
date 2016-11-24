@@ -20,7 +20,7 @@ elementclass Router {
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 		-> CheckIPHeader
-		-> IGMPDistributor(INFOBASE table)
+		//-> SetIPChecksum
 		-> rt :: StaticIPLookup(
 					$server_address:ip/32 0,
 					$client1_address:ip/32 0,
@@ -28,7 +28,7 @@ elementclass Router {
 					$server_address:ipnet 1,
 					$client1_address:ipnet 2,
 					$client2_address:ipnet 3,
-					224.0.0.0/4 4); //multicast addresses
+					255.255.255.255/0 4);
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
@@ -42,6 +42,12 @@ elementclass Router {
 
 	server_arpq :: ARPQuerier($server_address)
 		-> output;
+
+	filter0::RouterMulticastFilter(0,table)
+		->server_arpq;
+
+	filter0[1]
+		->Discard;
 
 	server_class[1]
 		-> arpt
@@ -62,6 +68,12 @@ elementclass Router {
 		-> ToDump(dumps/allPacketsNetwork1.dump)
 		-> [1]output;
 
+	filter1::RouterMulticastFilter(1,table)
+		->client1_arpq;
+
+	filter1[1]
+		-> Discard;
+
 	client1_class[1]
 		-> arpt[1]
 		-> [1]client1_arpq;
@@ -80,6 +92,13 @@ elementclass Router {
 	client2_arpq :: ARPQuerier($client2_address)
 		-> ToDump(dumps/allPacketsNetwork2.dump)
 		-> [2]output;
+
+	filter2::RouterMulticastFilter(2,table)
+		->client2_arpq;
+
+	filter2[1]
+		-> ToDump(foo.dump)
+		-> Discard;
 
 	client2_class[1]
 		-> arpt[2]
@@ -182,8 +201,16 @@ elementclass Router {
 		-> Discard
 	
 	IPClass[1]
-		-> Discard
+		-> splitter::Tee(3);
 	
+	splitter[0]
+		-> filter0;
+
+	splitter[1]
+		->filter1;
+
+	splitter[2]
+		->filter2;
 		
 }
 

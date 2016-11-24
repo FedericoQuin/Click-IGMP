@@ -6,18 +6,20 @@
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
 #include <click/timer.hh>
-
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
-#include <sstream>
 
 CLICK_DECLS
 
-IGMPReport::IGMPReport() {}
+IGMPReport::IGMPReport() : clientState(0) {}
 IGMPReport::~IGMPReport() {}
 
 int IGMPReport::configure(Vector<String>& conf, ErrorHandler* errh) {
+    if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElement, &clientState, cpEnd) < 0) return -1;
+    if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
+
+
     Timer* timer = new Timer(this);
     timer->initialize(this);
     timer->schedule_after_msec(1000);
@@ -31,7 +33,7 @@ void IGMPReport::run_timer(Timer* timer) {
     // left the timer here for later potential debugging reasons
     static int temp = 0;
     int new_addr = 16909056+temp++;
-    f_listenAddresses.push_back(IPAddress(htonl(new_addr)));
+    // f_listenAddresses.push_back(IPAddress(htonl(new_addr)));
     // if (Packet*q = this->make_packet(3, f_listenAddresses.back())) {
     if (Packet*q = this->make_packet(RECORD_TYPE_MODE_EX)) {
         output(0).push(q);
@@ -49,14 +51,12 @@ int IGMPReport::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
         cpEnd)
     < 0 ) return -1;
 
-    for (Vector<IPAddress>::iterator it = thisElement->f_listenAddresses.begin(); it != thisElement->f_listenAddresses.end(); it++) {
-        if (*it == input_ipaddr) {
-            return 0;
-        }
+    if (thisElement->clientState->hasAddress(input_ipaddr) == true) {
+        return 0;
     }
 
-    /// add the element to the listenaddresses and sent an IGMP report to the network
-    thisElement->f_listenAddresses.push_back(input_ipaddr);
+    /// add the element to the clientState and sent an IGMP report to the network
+    thisElement->clientState->addAddress(input_ipaddr);
     if (Packet* q = thisElement->make_packet(RECORD_TYPE_IN_TO_EX, input_ipaddr)) {
         thisElement->output(0).push(q);
     }
@@ -73,14 +73,13 @@ int IGMPReport::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
         cpEnd)
     < 0 ) return -1;
 
-    for (Vector<IPAddress>::iterator it = thisElement->f_listenAddresses.begin(); it != thisElement->f_listenAddresses.end(); it++) {
-        /// remove the element from the listenaddresses and sent an IGMP report to the network
-        if (*it == input_ipaddr) {
-            thisElement->f_listenAddresses.erase(it--);
-            if (Packet* q = thisElement->make_packet(RECORD_TYPE_EX_TO_IN, input_ipaddr)) {
-                thisElement->output(0).push(q);
-            }
-        }
+    if (thisElement->clientState->hasAddress(input_ipaddr) == false) {
+        return 0;
+    }
+
+    thisElement->clientState->deleteAddress(input_ipaddr);
+    if (Packet* q = thisElement->make_packet(RECORD_TYPE_EX_TO_IN, input_ipaddr)) {
+        thisElement->output(0).push(q);
     }
 
     return 0;
@@ -94,6 +93,8 @@ void IGMPReport::add_handlers() {
 
 Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
 
+    Vector<IPAddress> listenAddresses = clientState->getAllAddresses();
+
     bool isFilterModeChange = false;
     if (changedIP.empty() == false)
         isFilterModeChange = true;
@@ -101,7 +102,7 @@ Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
     int amtGroupRecords = 0;
 
     if (isFilterModeChange == false)
-        amtGroupRecords = f_listenAddresses.size();
+        amtGroupRecords = listenAddresses.size();
     else
         amtGroupRecords = 1;
 
@@ -129,7 +130,7 @@ Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
             record->Record_Type = groupRecordProto; // uses the type specified in the argument 
             record->Aux_Data_Len = 0; // not used in IGMPv3
             record->Number_of_Sources = 0; // does not need to be implemented in our version
-            record->Multicast_Address = f_listenAddresses.at(i); // multicast_address i
+            record->Multicast_Address = listenAddresses.at(i); // multicast_address i
 
             record = record + 1;
         }

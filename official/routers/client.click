@@ -3,18 +3,28 @@
 // Packets for the network are put on output 0
 // Packets for the host are put on output 1
 
+
 elementclass Client {
 	$address, $gateway |
 
+	clientState :: ClientInfoBase()
 	ip :: Strip(14)
 		-> CheckIPHeader()
 		-> rt :: StaticIPLookup(
 					$address:ip/32 0,
 					$address:ipnet 0,
-					0.0.0.0/0.0.0.0 $gateway 1)
+					224.0.0.0/4 1,
+					0.0.0.0/0.0.0.0 $gateway 2)
 		-> [1]output;
 	
 	rt[1]
+		-> filter::ClientMulticastFilter(STATE clientState)
+		-> [1]output
+
+	filter[1]
+		-> Discard
+
+	rt[2]
 		-> DropBroadcasts
 		-> ipgw :: IPGWOptions($address)
 		-> FixIPSrc($address)
@@ -48,7 +58,7 @@ elementclass Client {
 	in_cl[2]
 		-> ip;
 
-	reportSource::IGMPReport()
+	reportSource::IGMPReport(STATE clientState)
 		-> IPEncap(2, $address, 224.0.0.22, TTL 1)
 		-> CheckIPHeader()
 		-> arpq
