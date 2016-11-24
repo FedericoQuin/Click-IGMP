@@ -1,10 +1,10 @@
 #ifndef CLICK_IGMPPACKETS_H
 #define CLICK_IGMPPACKETS_H
 
-// #include <stdint.h>
-
-
 #define IGMP_QUERY_TYPE 0x11
+/*
+The IGMP_query header
+*/
 struct IGMP_query {
     uint8_t Type;
     uint8_t Max_Resp_Code;
@@ -20,6 +20,9 @@ struct IGMP_query {
 };
 
 #define IGMP_REPORT_TYPE 0x22
+/*
+The IGMP_report header
+*/
 struct IGMP_report {
     uint8_t Type;
     uint8_t Reserved1;
@@ -33,6 +36,9 @@ struct IGMP_report {
 #define RECORD_TYPE_EX_TO_IN 3
 #define RECORD_TYPE_IN_TO_EX 4
 
+/*
+The IGMP_grouprecord
+*/
 struct IGMP_grouprecord {
     uint8_t Record_Type;
     uint8_t Aux_Data_Len;

@@ -12,19 +12,23 @@
 //	[2]: packets sent to the 192.168.3.0/24 network
 //  [3]: packets destined for the router itself
 
+table::RouterInfoBase
+
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 		-> CheckIPHeader
+		-> IGMPDistributor(INFOBASE table)
 		-> rt :: StaticIPLookup(
 					$server_address:ip/32 0,
 					$client1_address:ip/32 0,
 					$client2_address:ip/32 0,
 					$server_address:ipnet 1,
 					$client1_address:ipnet 2,
-					$client2_address:ipnet 3);
+					$client2_address:ipnet 3,
+					224.0.0.0/4 4); //multicast addresses
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
@@ -50,12 +54,12 @@ elementclass Router {
 	// Input and output paths for interface 1
 	input[1]
 		-> HostEtherFilter($client1_address)
-		-> ToDump(dumps/receivedPacketsRouter.dump)
 		-> client1_class :: Classifier(12/0806 20/0001, 12/0806 20/0002, -)
 		-> ARPResponder($client1_address)
 		-> [1]output;
 
 	client1_arpq :: ARPQuerier($client1_address)
+		-> ToDump(dumps/allPacketsNetwork1.dump)
 		-> [1]output;
 
 	client1_class[1]
@@ -74,6 +78,7 @@ elementclass Router {
 		-> [2]output;
 
 	client2_arpq :: ARPQuerier($client2_address)
+		-> ToDump(dumps/allPacketsNetwork2.dump)
 		-> [2]output;
 
 	client2_class[1]
@@ -165,5 +170,20 @@ elementclass Router {
 	client2_frag[1]
 		-> ICMPError($client2_address, unreachable, needfrag)
 		-> rt;
+
+
+	// Handling of IGMP packets (for now: JOIN and LEAVE operations)
+	rt[4] 
+		-> IPClass::IPClassifier(ip proto IGMP,-)
+		-> checker::CheckIGMPHeader
+		-> IGMPReportReceiver(INFOBASE table)
+
+	checker[1]
+		-> Discard
+	
+	IPClass[1]
+		-> Discard
+	
+		
 }
 
