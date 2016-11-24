@@ -21,7 +21,6 @@ elementclass Client {
 		-> ttl :: DecIPTTL
 		-> frag :: IPFragmenter(1500)
 		-> arpq :: ARPQuerier($address)
-		-> ToDump(dumps/packetsInClient.dump)
 		-> output;
 
 	ipgw[1]
@@ -38,7 +37,6 @@ elementclass Client {
 
 	// Incoming Packets
 	input
-		-> ToDump(clientInput.dump)
 		-> HostEtherFilter($address)
 		-> in_cl :: Classifier(12/0806 20/0001, 12/0806 20/0002, 12/0800)
 		-> arp_res :: ARPResponder($address)
@@ -50,7 +48,6 @@ elementclass Client {
 	in_cl[2]
 		-> ip;
 
-	// own tests
 	reportSource::IGMPReport()
 		-> IPEncap(2, $address, 224.0.0.22, TTL 1)
 		-> CheckIPHeader()
