@@ -22,6 +22,7 @@ elementclass Server {
 		-> ttl :: DecIPTTL
 		-> frag :: IPFragmenter(1500)
 		-> arpq :: ARPQuerier($address)
+		-> ToDump(dumps/serverOutput.dump)
 		-> output;
 
 	ipgw[1]
