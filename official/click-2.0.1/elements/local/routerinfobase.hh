@@ -37,22 +37,22 @@ class RouterInfoBase : public Element {
 		
 		const char *class_name() const	{ return "RouterInfoBase"; }
 		int configure(Vector<String>&, ErrorHandler*);
-		void addIPToGroup(IPAddress,IPAddress);
+		void addIPToGroup(IPAddress,uint8_t);
 		/*
 		Adds the second IPAddress to the group with the first IPAddress
 		*/
-		void deleteIPFromGroup(IPAddress,IPAddress);
+		void deleteIPFromGroup(IPAddress,uint8_t);
 		/*
 		Deletes the second IPAddress from the group with the first IPAddress
 		*/
-		Vector<IPAddress> getGroup(IPAddress);
+		Vector<IPAddress> getGroups(uint8_t);
 		/*
 		Returns a vector with the IPAddresses from those who are joined to the group with the input IPAddress 
 		*/
 		
 
 	private:
-		HashTable<IPAddress,Vector<IPAddress> > table;
+		HashTable<uint8_t,Vector<IPAddress> > table;
 		
 };
 

@@ -6,8 +6,7 @@
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
 #include <click/timer.hh>
-
-#include <stdlib.h>
+#include <click/packet_anno.hh>
 
 CLICK_DECLS
 
@@ -29,22 +28,25 @@ void IGMPReportReceiver::push(int, Packet *p){
 	}
 	const click_ip *ipheader = p->ip_header();
 
-	IPAddress source = ipheader->ip_src;
+	uint8_t sourceInterface = p->anno_u8(PAINT_ANNO_OFFSET)-1;
 
 	IGMP_report* igmp = (IGMP_report*)(p->data()+p->ip_header_length());
 
 
 	uint16_t number = ntohs(igmp->Number_of_Group_Records);
 
+
+
 	for(uint16_t i = 0; i < number; i++){
 		IGMP_grouprecord* record = (IGMP_grouprecord*)(p->data()+p->ip_header_length()+sizeof(IGMP_report)+i*sizeof(IGMP_grouprecord));
 		IPAddress groupAddess = record->Multicast_Address;
 		uint8_t type = record->Record_Type;
 		if(type == RECORD_TYPE_IN_TO_EX){
-			infoBase->addIPToGroup(groupAddess,source);
+			infoBase->addIPToGroup(groupAddess,sourceInterface);
 		}
 		else if(type == RECORD_TYPE_EX_TO_IN){
-			infoBase->deleteIPFromGroup(groupAddess,source);
+			//STEL NOG EEN QUERY
+			infoBase->deleteIPFromGroup(groupAddess,sourceInterface);
 		}
 
 	}

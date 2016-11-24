@@ -19,30 +19,28 @@ int RouterInfoBase::configure(Vector<String> &conf, ErrorHandler *errh) {
 	return 0;
 }
 
-void RouterInfoBase::addIPToGroup(IPAddress groupIP, IPAddress joinIP){
+void RouterInfoBase::addIPToGroup(IPAddress groupIP, uint8_t joinInterface){
 
-	for (Vector<IPAddress>::iterator i = table[groupIP].begin(); i != table[groupIP].end(); i++){
-		if (*i == joinIP){
+	for (Vector<IPAddress>::iterator i = table[joinInterface].begin(); i != table[joinInterface].end(); i++){
+		if (*i == groupIP){
 			return;
 		}
 	}
-	table[groupIP].push_back(joinIP);
+	table[joinInterface].push_back(groupIP);
 }
 
-void RouterInfoBase::deleteIPFromGroup(IPAddress groupIP, IPAddress joinIP){
-	Vector<IPAddress> IPs = table[groupIP];
-
-	for (Vector<IPAddress>::iterator i = table[groupIP].begin(); i != table[groupIP].end(); i++){
-		if (*i == joinIP){
-			table[groupIP].erase(i);
+void RouterInfoBase::deleteIPFromGroup(IPAddress groupIP, uint8_t UnjoinInterface){
+	for (Vector<IPAddress>::iterator i = table[UnjoinInterface].begin(); i != table[UnjoinInterface].end(); i++){
+		if (*i == groupIP){
+			table[UnjoinInterface].erase(i);
 			return;
 		}
 	}
 	return;
 }
 
-Vector<IPAddress> RouterInfoBase::getGroup(IPAddress groupIP){
-	return table[groupIP];
+Vector<IPAddress> RouterInfoBase::getGroups(uint8_t interface){
+	return table[interface];
 }
 
 CLICK_ENDDECLS
