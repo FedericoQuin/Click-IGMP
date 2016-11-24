@@ -42,9 +42,6 @@ void IGMPReportReceiver::push(int, Packet *p){
 		uint8_t type = record->Record_Type;
 		if(type == RECORD_TYPE_IN_TO_EX){
 			infoBase->addIPToGroup(groupAddess,source);
-			// click_chatter(groupAddess.s().c_str());
-			// click_chatter(source.s().c_str());
-			// click_chatter("join");
 		}
 		else if(type == RECORD_TYPE_EX_TO_IN){
 			infoBase->deleteIPFromGroup(groupAddess,source);

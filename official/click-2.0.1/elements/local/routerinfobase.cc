@@ -21,19 +21,12 @@ int RouterInfoBase::configure(Vector<String> &conf, ErrorHandler *errh) {
 
 void RouterInfoBase::addIPToGroup(IPAddress groupIP, IPAddress joinIP){
 
-	//checks wether it is already in there
 	for (Vector<IPAddress>::iterator i = table[groupIP].begin(); i != table[groupIP].end(); i++){
 		if (*i == joinIP){
 			return;
 		}
 	}
-
-	//just adds the IP address
-	Vector<IPAddress> current = table[groupIP];
-	current.push_back(joinIP);
-	table[groupIP] = current;
-
-	// table[groupIP].push_back(joinIP);
+	table[groupIP].push_back(joinIP);
 }
 
 void RouterInfoBase::deleteIPFromGroup(IPAddress groupIP, IPAddress joinIP){

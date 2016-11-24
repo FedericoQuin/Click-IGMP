@@ -27,13 +27,28 @@ It does not have any in or outputs
 class RouterInfoBase : public Element { 
 	public:
 		RouterInfoBase();
+		/*
+		Constructor
+		*/
 		~RouterInfoBase();
+		/*
+		Destructor
+		*/
 		
 		const char *class_name() const	{ return "RouterInfoBase"; }
 		int configure(Vector<String>&, ErrorHandler*);
 		void addIPToGroup(IPAddress,IPAddress);
+		/*
+		Adds the second IPAddress to the group with the first IPAddress
+		*/
 		void deleteIPFromGroup(IPAddress,IPAddress);
+		/*
+		Deletes the second IPAddress from the group with the first IPAddress
+		*/
 		Vector<IPAddress> getGroup(IPAddress);
+		/*
+		Returns a vector with the IPAddresses from those who are joined to the group with the input IPAddress 
+		*/
 		
 
 	private:

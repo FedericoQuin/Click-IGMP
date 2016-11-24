@@ -8,7 +8,19 @@
 #include <click/timer.hh>
 
 CLICK_DECLS
+/*
+=c
+IGMPQUERY()
 
+=s local
+
+Creates a IGMPquery packet.
+
+=d
+
+Not yet completly done
+
+*/
 
 class IGMPQuery : public Element {
 public:

@@ -23,33 +23,6 @@ int IGMPDistributor::configure(Vector<String> &conf, ErrorHandler *errh) {
 	return 0;
 }
 
-// void IGMPDistributor::push(int, Packet *p){
-// 	const click_ip *ipheader = p->ip_header();
-// 	IPAddress toCheck = ipheader->ip_dst;
-// 	Vector<IPAddress> vector = infoBase->getGroup(toCheck);
-// 	if(vector.empty()){
-// 		output(0).push(p);
-// 		return;
-// 	}
-
-// 	std::cout << "Size of vector: " << vector.size() << std::endl;
-// 	for (int i = 0; i < vector.size(); i++) {
-// 		String ipaddress = vector[i].unparse();
-// 		std::cout << "\t" << ipaddress << std::endl;
-// 	}
-// 	for(Vector<IPAddress>::iterator i = vector.begin(); i != vector.end(); i++){
-
-// 		WritablePacket *q = p->uniqueify();
-// 		click_ip *header = (click_ip*)(q->data());
-// 		header->ip_src = toCheck;
-// 		header->ip_dst = i->in_addr();
-// 		q->set_dst_ip_anno(*i);
-// 		// q->set_anno_u32(0,i->addr());
-// 		header->ip_sum = click_in_cksum((unsigned char *)(header),sizeof(click_ip));
-// 		output(0).push(q);
-// 	}
-// }
-
 void IGMPDistributor::push(int port, Packet* p) {
 	const click_ip* IPHeader = (click_ip*)p->data();
 
@@ -65,14 +38,17 @@ void IGMPDistributor::push(int port, Packet* p) {
 	for (int i = 0; i < IGMPlisteners.size(); i++) {
 		IPAddress newDestination = IGMPlisteners[i];
 
-		WritablePacket* newPkt = p->uniqueify();
+		Packet *clone = p->clone();
+		WritablePacket* newPkt = clone->uniqueify();
 
 		click_ip* newIPHeader = (click_ip*)newPkt->data();
 		newIPHeader->ip_src = destinationAddr;
 		newIPHeader->ip_dst = newDestination;
 		newPkt->set_dst_ip_anno(newDestination);
 
-		newIPHeader->ip_sum = click_in_cksum((unsigned char*)newIPHeader, sizeof(click_ip));
+		newIPHeader->ip_sum = 0;
+		unsigned hlen = newIPHeader->ip_hl << 2;
+		newIPHeader->ip_sum = click_in_cksum((unsigned char *)newIPHeader, hlen);
 
 		output(0).push(newPkt);
 	}
