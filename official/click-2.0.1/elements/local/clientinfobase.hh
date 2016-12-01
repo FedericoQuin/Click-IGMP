@@ -25,6 +25,7 @@ class ClientInfoBase : public Element {
 		
 
 	private:
+		int f_qrv; /// The Query Robustness Variable
 		Vector<IPAddress> f_listenAddresses;
 		
 };

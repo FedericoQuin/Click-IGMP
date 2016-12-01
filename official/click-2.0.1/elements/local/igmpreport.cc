@@ -41,6 +41,20 @@ void IGMPReport::run_timer(Timer* timer) {
     }
 }
 
+void IGMPReport::sendGroupSpecificReport(IPAddress ipAddr) {
+    bool isListenedTo = clientState->hasAddress(ipAddr);
+
+    if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_EX_TO_IN), ipAddr)) {
+        output(0).push(q);
+    }
+}
+
+void IGMPReport::sendGeneralReport() {
+    if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
+        output(0).push(q);
+    }
+}
+
 
 int IGMPReport::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
     IGMPReport* thisElement = (IGMPReport*) e;
@@ -95,13 +109,15 @@ Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
 
     Vector<IPAddress> listenAddresses = clientState->getAllAddresses();
 
-    bool isFilterModeChange = false;
-    if (changedIP.empty() == false)
-        isFilterModeChange = true;
+    bool isGeneralReport = false;
+    if (changedIP.empty() == true)
+        isGeneralReport = true;
+
+    // click_chatter(isGeneralReport == true ? "general" : "not general");
 
     int amtGroupRecords = 0;
 
-    if (isFilterModeChange == false)
+    if (isGeneralReport == true)
         amtGroupRecords = listenAddresses.size();
     else
         amtGroupRecords = 1;
@@ -125,7 +141,7 @@ Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
 
     IGMP_grouprecord* record = (IGMP_grouprecord*)(igmph + 1);
 
-    if (isFilterModeChange == false){
+    if (isGeneralReport == true) {
         for (int i = 0; i < amtGroupRecords; i++) {
             record->Record_Type = groupRecordProto; // uses the type specified in the argument 
             record->Aux_Data_Len = 0; // not used in IGMPv3

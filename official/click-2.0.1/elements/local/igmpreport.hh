@@ -40,17 +40,21 @@ public:
     // timer still here for debugging reasons
     void run_timer(Timer*);
 
+    void sendGroupSpecificReport(IPAddress ipAddr);
+    void sendGeneralReport();
+
     /// --------
     /// HANDLERS
     /// --------
-    static int handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+
     /*
 	Join a group
     */
-    static int handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+    static int handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
     /*
     Leave a group
     */
+    static int handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
     void add_handlers();
 
 

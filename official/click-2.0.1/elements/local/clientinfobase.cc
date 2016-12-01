@@ -9,7 +9,9 @@
 
 CLICK_DECLS
 
-ClientInfoBase::ClientInfoBase() {}
+ClientInfoBase::ClientInfoBase() : f_qrv(2) {
+    f_listenAddresses = Vector<IPAddress>();
+}
 ClientInfoBase::~ClientInfoBase() {}
 
 int ClientInfoBase::configure(Vector<String>& conf, ErrorHandler* errh) {
@@ -18,6 +20,7 @@ int ClientInfoBase::configure(Vector<String>& conf, ErrorHandler* errh) {
 
 
 void ClientInfoBase::addAddress(IPAddress newAddr) {
+    // click_chatter("added an address.");
     if (hasAddress(newAddr) == true) {
         return;
     }
@@ -48,6 +51,9 @@ bool ClientInfoBase::hasAddress(IPAddress compAddr) const {
 
 
 Vector<IPAddress> ClientInfoBase::getAllAddresses() const {
+    // click_chatter("got in this method..");
+    // if (f_listenAddresses.empty() == true)
+    //     click_chatter("should print this...");
     return f_listenAddresses;
 }
 
