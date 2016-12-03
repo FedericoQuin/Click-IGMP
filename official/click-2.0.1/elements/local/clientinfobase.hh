@@ -15,17 +15,20 @@ class ClientInfoBase : public Element {
 		ClientInfoBase();
 		~ClientInfoBase();
 
-		
 		const char *class_name() const	{ return "ClientInfoBase"; }
 		int configure(Vector<String>&, ErrorHandler*);
+		void* cast(const char* n);
+		
 		void addAddress(IPAddress);
 		void deleteAddress(IPAddress);
 		bool hasAddress(IPAddress) const;
         Vector<IPAddress> getAllAddresses() const;
+		void setQRV(const int qrv);
+		int getQRV() const;
 		
 
 	private:
-		int f_qrv; /// The Query Robustness Variable
+		int f_qrv; /// The Querier Robustness Variable
 		Vector<IPAddress> f_listenAddresses;
 		
 };

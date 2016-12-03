@@ -1,7 +1,7 @@
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
-#include "igmpreport.hh"
+#include "igmpreportgenerator.hh"
 #include "igmppackets.h"
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
@@ -12,10 +12,10 @@
 
 CLICK_DECLS
 
-IGMPReport::IGMPReport() : clientState(0) {}
-IGMPReport::~IGMPReport() {}
+IGMPReportGenerator::IGMPReportGenerator() : clientState(0) {}
+IGMPReportGenerator::~IGMPReportGenerator() {}
 
-int IGMPReport::configure(Vector<String>& conf, ErrorHandler* errh) {
+int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
     if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElement, &clientState, cpEnd) < 0) return -1;
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
 
@@ -27,7 +27,7 @@ int IGMPReport::configure(Vector<String>& conf, ErrorHandler* errh) {
     return 0;
 }
 
-void IGMPReport::run_timer(Timer* timer) {
+void IGMPReportGenerator::run_timer(Timer* timer) {
     return; 
 
     // left the timer here for later potential debugging reasons
@@ -41,7 +41,7 @@ void IGMPReport::run_timer(Timer* timer) {
     }
 }
 
-void IGMPReport::sendGroupSpecificReport(IPAddress ipAddr) {
+void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr) {
     bool isListenedTo = clientState->hasAddress(ipAddr);
 
     if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_EX_TO_IN), ipAddr)) {
@@ -49,15 +49,15 @@ void IGMPReport::sendGroupSpecificReport(IPAddress ipAddr) {
     }
 }
 
-void IGMPReport::sendGeneralReport() {
+void IGMPReportGenerator::sendGeneralReport() {
     if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
         output(0).push(q);
     }
 }
 
 
-int IGMPReport::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
-    IGMPReport* thisElement = (IGMPReport*) e;
+int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
+    IGMPReportGenerator* thisElement = (IGMPReportGenerator*) e;
     IPAddress input_ipaddr;
 
     if (cp_va_kparse(conf, thisElement, errh, 
@@ -78,8 +78,8 @@ int IGMPReport::handleJoin(const String& conf, Element* e, void* thunk, ErrorHan
     return 0;
 }
 
-int IGMPReport::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
-    IGMPReport* thisElement = (IGMPReport*) e;
+int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
+    IGMPReportGenerator* thisElement = (IGMPReportGenerator*) e;
     IPAddress input_ipaddr;
 
     if (cp_va_kparse(conf, thisElement, errh, 
@@ -99,13 +99,13 @@ int IGMPReport::handleLeave(const String& conf, Element* e, void* thunk, ErrorHa
     return 0;
 }
 
-void IGMPReport::add_handlers() {
+void IGMPReportGenerator::add_handlers() {
     add_write_handler("join_group", &handleJoin, (void*)0);
     add_write_handler("leave_group", &handleLeave, (void*)0);
 }
 
 
-Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
+Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changedIP) {
 
     Vector<IPAddress> listenAddresses = clientState->getAllAddresses();
 
@@ -163,4 +163,4 @@ Packet* IGMPReport::make_packet(int groupRecordProto, IPAddress changedIP) {
 }
 
 CLICK_ENDDECLS
-EXPORT_ELEMENT(IGMPReport)
+EXPORT_ELEMENT(IGMPReportGenerator)

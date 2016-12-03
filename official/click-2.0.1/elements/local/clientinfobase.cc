@@ -6,6 +6,7 @@
 #include <click/timer.hh>
 #include <click/vector.hh>
 #include "clientinfobase.hh"
+#include <iostream>
 
 CLICK_DECLS
 
@@ -14,13 +15,19 @@ ClientInfoBase::ClientInfoBase() : f_qrv(2) {
 }
 ClientInfoBase::~ClientInfoBase() {}
 
+void* ClientInfoBase::cast(const char* n) {
+    if (strcmp(n, "ClientInfoBase") == 0)
+        return (ClientInfoBase*)this;
+    return 0;
+}
+
+
 int ClientInfoBase::configure(Vector<String>& conf, ErrorHandler* errh) {
     return 0;
 }
 
 
 void ClientInfoBase::addAddress(IPAddress newAddr) {
-    // click_chatter("added an address.");
     if (hasAddress(newAddr) == true) {
         return;
     }
@@ -51,12 +58,15 @@ bool ClientInfoBase::hasAddress(IPAddress compAddr) const {
 
 
 Vector<IPAddress> ClientInfoBase::getAllAddresses() const {
-    // click_chatter("got in this method..");
-    // if (f_listenAddresses.empty() == true)
-    //     click_chatter("should print this...");
     return f_listenAddresses;
 }
 
+void ClientInfoBase::setQRV(const int qrv) {
+    if (qrv == 0) {
+        click_chatter("setting QRV to 0, which should not happen.");
+    }   /// TODO remove this part, still here to make sure nothing's going wrong
+    f_qrv = qrv;
+}
 
 
 CLICK_ENDDECLS

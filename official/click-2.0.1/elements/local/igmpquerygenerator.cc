@@ -1,7 +1,7 @@
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
-#include "igmpquery.hh"
+#include "igmpquerygenerator.hh"
 #include "igmppackets.h"
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
@@ -13,11 +13,11 @@
 
 CLICK_DECLS
 
-IGMPQuery::IGMPQuery() : f_mrc(0), f_qrv(0), f_qqic(0) {}
+IGMPQueryGenerator::IGMPQueryGenerator() : f_mrc(0), f_qrv(0), f_qqic(0) {}
 
-IGMPQuery::~IGMPQuery() {}
+IGMPQueryGenerator::~IGMPQueryGenerator() {}
 
-int IGMPQuery::configure(Vector<String>& conf, ErrorHandler* errh) {
+int IGMPQueryGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
 
 	if ( cp_va_kparse(conf, this, errh,
 		"MRC", cpkM + cpkP, cpUnsigned, &f_mrc,
@@ -32,14 +32,14 @@ int IGMPQuery::configure(Vector<String>& conf, ErrorHandler* errh) {
 	return 0;
 }
 
-void IGMPQuery::run_timer(Timer* timer) {
+void IGMPQueryGenerator::run_timer(Timer* timer) {
 	if (Packet* q = this->make_packet()) {
 		output(0).push(q);
 		timer->reschedule_after_msec(1000);
 	}
 }
 
-Packet* IGMPQuery::make_packet() {
+Packet* IGMPQueryGenerator::make_packet() {
 	int headroom = sizeof(click_ether) + sizeof(click_ip);
 	WritablePacket* q = Packet::make(headroom, 0, sizeof(struct IGMP_query), 0);
 	if (!q)
@@ -51,7 +51,7 @@ Packet* IGMPQuery::make_packet() {
 
 	igmph->Type = 0x11;
 	igmph->Max_Resp_Code = f_mrc;
-	igmph->Group_Address = 0;
+	igmph->Group_Address = 0; //IPAddress("226.1.1.1");
 	igmph->Resv = 0;
 	igmph->S = 0;
 	igmph->QRV = f_qrv;
@@ -63,4 +63,4 @@ Packet* IGMPQuery::make_packet() {
 }
 
 CLICK_ENDDECLS
-EXPORT_ELEMENT(IGMPQuery)
+EXPORT_ELEMENT(IGMPQueryGenerator)

@@ -1,5 +1,5 @@
-#ifndef CLICK_IGMPQUERY_HH
-#define CLICK_IGMPQUERY_HH
+#ifndef CLICK_IGMPQUERYGENERATOR_HH
+#define CLICK_IGMPQUERYGENERATOR_HH
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
@@ -10,11 +10,11 @@
 CLICK_DECLS
 /*
 =c
-IGMPQUERY()
+IGMPQUERYGenerator()
 
 =s local
 
-Creates a IGMPquery packet.
+Creates a IGMPqueryGenerator packet.
 
 =d
 
@@ -22,12 +22,12 @@ Not yet completly done
 
 */
 
-class IGMPQuery : public Element {
+class IGMPQueryGenerator : public Element {
 public:
-	IGMPQuery();
-	~IGMPQuery();
+	IGMPQueryGenerator();
+	~IGMPQueryGenerator();
 
-	const char* class_name() const { return "IGMPQuery"; }
+	const char* class_name() const { return "IGMPQueryGenerator"; }
 	const char* port_count() const { return "0/1"; }
 	const char* processing() const { return PUSH; }
 	int configure(Vector<String>&, ErrorHandler*);

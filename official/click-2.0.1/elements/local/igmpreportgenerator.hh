@@ -1,5 +1,5 @@
-#ifndef CLICK_IGMPREPORT_HH
-#define CLICK_IGMPREPORT_HH
+#ifndef CLICK_IGMPREPORTGENERATOR_HH
+#define CLICK_IGMPREPORTGENERATOR_HH
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
@@ -13,26 +13,26 @@ CLICK_DECLS
 
 /*
 =c
-IGMPReport()
+IGMPReportGenerator()
 
 =s local
 
-Creates a IGMPReport packet.
+Creates a IGMPReportGenerator packet.
 
 =d
 
-It pushes an IGMPReport packet out without an IP-header.
+It pushes an IGMPReportGenerator packet out without an IP-header.
 It will create an empty EXLUDE package when the join_group handler is called
 It will create an empty INCLUDE package when the leave_group handler is called
 
 */
 
-class IGMPReport : public Element {
+class IGMPReportGenerator : public Element {
 public:
-    IGMPReport();
-    ~IGMPReport();
+    IGMPReportGenerator();
+    ~IGMPReportGenerator();
 
-    const char* class_name() const { return "IGMPReport"; }
+    const char* class_name() const { return "IGMPReportGenerator"; }
     const char* port_count() const { return "0/1"; }
     const char* processing() const { return PUSH; }
     int configure(Vector<String>&, ErrorHandler*);

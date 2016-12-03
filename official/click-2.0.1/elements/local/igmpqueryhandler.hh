@@ -7,7 +7,7 @@
 #include <clicknet/ether.h>
 #include <click/timer.hh>
 #include "clientinfobase.hh"
-#include "igmpreport.hh"
+#include "igmpreportgenerator.hh"
 
 CLICK_DECLS
 
@@ -26,7 +26,7 @@ class IGMPQueryHandler : public Element {
 	private:
 		void handleQuery(Packet* p);
 		ClientInfoBase* clientState;
-        IGMPReport* reportGenerator;
+        IGMPReportGenerator* reportGenerator;
 
 };
 
