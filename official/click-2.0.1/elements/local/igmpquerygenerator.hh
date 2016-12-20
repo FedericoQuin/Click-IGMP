@@ -33,9 +33,10 @@ public:
 	int configure(Vector<String>&, ErrorHandler*);
 
 	void run_timer(Timer*);
+	void sendGroupSpecificQuery(IPAddress addr);
 
 private:
-	Packet* make_packet();
+	Packet* make_packet(IPAddress groupAddr = IPAddress());
 	unsigned int f_mrc;
 	unsigned int f_qrv;
 	unsigned int f_qqic;

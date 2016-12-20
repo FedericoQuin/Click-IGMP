@@ -27,19 +27,29 @@ int IGMPQueryGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
 
 	Timer* timer = new Timer(this);
 	timer->initialize(this);
-	timer->schedule_after_msec(1000);
+	timer->schedule_after_msec(125 * 1000);
 
 	return 0;
 }
 
-void IGMPQueryGenerator::run_timer(Timer* timer) {
-	if (Packet* q = this->make_packet()) {
+void IGMPQueryGenerator::sendGroupSpecificQuery(IPAddress addr) {
+	if (Packet* q = this->make_packet(addr)) {
 		output(0).push(q);
-		timer->reschedule_after_msec(1000);
 	}
 }
 
-Packet* IGMPQueryGenerator::make_packet() {
+
+void IGMPQueryGenerator::run_timer(Timer* timer) {
+	if (Packet* q = this->make_packet()) {
+		output(0).push(q);
+		timer->reschedule_after_msec(125 * 1000); // TODO still hardcoded, make this adjustable according to a variable in infobase
+	}
+}
+
+/**
+ * Makes by default a general query, or a group specific query when specifying an IP address.
+ */
+Packet* IGMPQueryGenerator::make_packet(IPAddress groupAddr) {
 	int headroom = sizeof(click_ether) + sizeof(click_ip);
 	WritablePacket* q = Packet::make(headroom, 0, sizeof(struct IGMP_query), 0);
 	if (!q)
@@ -51,7 +61,7 @@ Packet* IGMPQueryGenerator::make_packet() {
 
 	igmph->Type = 0x11;
 	igmph->Max_Resp_Code = f_mrc;
-	igmph->Group_Address = IPAddress("226.1.1.1");
+	igmph->Group_Address = groupAddr;
 	igmph->Resv = 0;
 	igmph->S = 0;
 	igmph->QRV = f_qrv;
