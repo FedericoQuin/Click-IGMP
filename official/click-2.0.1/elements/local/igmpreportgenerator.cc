@@ -44,7 +44,7 @@ void IGMPReportGenerator::run_timer(Timer* timer) {
 void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr) {
     bool isListenedTo = clientState->hasAddress(ipAddr);
 
-    if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_EX_TO_IN), ipAddr)) {
+    if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
         output(0).push(q);
     }
 }
