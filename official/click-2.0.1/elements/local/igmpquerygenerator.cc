@@ -51,7 +51,7 @@ Packet* IGMPQueryGenerator::make_packet() {
 
 	igmph->Type = 0x11;
 	igmph->Max_Resp_Code = f_mrc;
-	igmph->Group_Address = 0; //IPAddress("226.1.1.1");
+	igmph->Group_Address = IPAddress("226.1.1.1");
 	igmph->Resv = 0;
 	igmph->S = 0;
 	igmph->QRV = f_qrv;
