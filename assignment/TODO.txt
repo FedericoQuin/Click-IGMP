@@ -11,7 +11,7 @@
  	IMPORTANT TASKS
  	---------------
 
-C	% Add necessary fields/methods to the routerinfobase (Query Robustness Variable, manipulation of QRV)
+C	* Add necessary fields/methods to the routerinfobase (Query Robustness Variable, manipulation of QRV)
 	> Add element IGMPQueryGenerator inside the router, with proper 'linkage' to other elements
 	> Create general queries every x milliseconds
 	> Handle reports which were answers to queries (interface adaptation accordingly)

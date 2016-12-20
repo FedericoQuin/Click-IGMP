@@ -27,17 +27,50 @@ It does not have any in or outputs
 class RouterInfoBase : public Element { 
 	public:
 		RouterInfoBase();
+		/*
+		Constructor
+		*/
 		~RouterInfoBase();
+		/*
+		Destructor
+		*/
 		
 		const char *class_name() const	{ return "RouterInfoBase"; }
 		int configure(Vector<String>&, ErrorHandler*);
-		void addIPToGroup(IPAddress,IPAddress);
-		void deleteIPFromGroup(IPAddress,IPAddress);
-		Vector<IPAddress> getGroup(IPAddress);
+		void addIPToGroup(IPAddress,uint8_t);
+		/*
+		Adds the second IPAddress to the group with the first IPAddress
+		*/
+		void deleteIPFromGroup(IPAddress,uint8_t);
+		/*
+		Deletes the second IPAddress from the group with the first IPAddress
+		*/
+		Vector<IPAddress> getGroups(uint8_t);
+		/*
+		Returns a vector with the IPAddresses from those who are joined to the group with the input IPAddress 
+		*/
+		uint8_t getQRV();
+		/*
+		Get the QRV value. Default value is 2.
+		*/
+		void setQRV(uint8_t);
+		/*
+		Sets the QRV value to the given value. if it is bigger than 7, 0 will be used
+		*/
+
+		/// --------
+    	/// HANDLERS
+    	/// --------
+		static int handleSetQRV(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+		/*
+		Handler to set the QRV value to the given value. if it is bigger than 7, 0 will be used
+		*/
+		void add_handlers();
 		
 
 	private:
-		HashTable<IPAddress,Vector<IPAddress> > table;
+		HashTable<uint8_t,Vector<IPAddress> > table;
+		uint8_t QRV;
 		
 };
 
