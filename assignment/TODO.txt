@@ -13,7 +13,7 @@
 
 C	* Add necessary fields/methods to the routerinfobase (Query Robustness Variable, manipulation of QRV)
 	> Add element IGMPQueryGenerator inside the router, with proper 'linkage' to other elements
-	> Create general queries every x milliseconds
+C	% Create general queries every x milliseconds
 	> Handle reports which were answers to queries (interface adaptation accordingly)
 F	* Write element IPEncapQuery, which encapsulates the IGMP packet with the appropriate IP header (depends on type of query)
 F	% Adjust IGMPReportGenerator to send a report multiple times (dependent on QRV)
