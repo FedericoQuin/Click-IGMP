@@ -29,7 +29,7 @@ void CheckIGMPHeader::push(int, Packet *p){
 	IGMP_query* igmphq = (IGMP_query*)(p->data()+p->ip_header_length());
 	bool succesQ = false;
 	if (igmphq != 0){
-		if (igmphq->Type == 17){
+		if (igmphq->Type == IGMP_QUERY_TYPE){
 			succesQ = checkQuery(p);
 		}
 	}
@@ -37,7 +37,7 @@ void CheckIGMPHeader::push(int, Packet *p){
 	IGMP_report* igmphr = (IGMP_report*)(p->data()+p->ip_header_length());
 	bool succesR = false;
 	if (igmphr != 0){
-		if (igmphq->Type == 0x22){
+		if (igmphq->Type == IGMP_REPORT_TYPE){
 			succesR = checkReport(p);
 		}
 	}
