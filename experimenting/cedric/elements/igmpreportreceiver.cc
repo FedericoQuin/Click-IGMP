@@ -46,7 +46,7 @@ void IGMPReportReceiver::push(int, Packet *p){
 		}
 		else if(type == RECORD_TYPE_EX_TO_IN){
 			//STEL NOG EEN QUERY
-			infoBase->deleteIPFromGroup(groupAddess,sourceInterface);
+			infoBase->sendQuery(groupAddess,sourceInterface);
 		}
 
 	}

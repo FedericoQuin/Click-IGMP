@@ -8,6 +8,7 @@
 #include <click/timer.hh>
 #include <click/hashtable.hh>
 #include <click/vector.hh>
+#include "igmpquerygenerator.hh"
 
 CLICK_DECLS
 /*
@@ -57,7 +58,7 @@ class RouterInfoBase : public Element {
 		/*
 		Sets the QRV value to the given value. if it is bigger than 7, 0 will be used
 		*/
-
+		void sendQuery(IPAddress,unsigned int);
 		/// --------
     	/// HANDLERS
     	/// --------
@@ -65,12 +66,28 @@ class RouterInfoBase : public Element {
 		/*
 		Handler to set the QRV value to the given value. if it is bigger than 7, 0 will be used
 		*/
+		static int handleSetInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+		/*
+		Handler to set the interval in which a query will be sent
+		*/
+		static int handleSetWait(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+		/*
+		Handler to set the time to wait before the actual delete
+		*/
+
 		void add_handlers();
 		
 
 	private:
+		static void sendQuery(Timer*,void*);
+		static void deleteInterfaceFromGroup(Timer*,void*);
+
+		IGMPQueryGenerator *_querier;
+		HashTable<uint8_t,HashTable<IPAddress, Timer*> > timers;
 		HashTable<uint8_t,Vector<IPAddress> > table;
 		uint8_t QRV;
+		unsigned int time;
+		unsigned int waitingTime;
 		
 };
 
