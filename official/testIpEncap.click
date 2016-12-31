@@ -3,7 +3,7 @@ clientState::ClientInfoBase()
 reportSource::IGMPReportGenerator(clientState)
 queryHandler::IGMPQueryHandler(clientState, reportSource)
 
-IGMPQueryGenerator(0)
+IGMPQueryGenerator(10)
 //	-> IPEncap(2, 192.168.1.20, 224.0.0.22, TTL 1)
 //	-> IPEncapIGMPQuery(192.168.1.20)
 //	-> EtherEncap(0x0800, 1A:7C:3E:90:78:41, 1A:7C:3E:90:78:42)

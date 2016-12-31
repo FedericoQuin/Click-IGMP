@@ -25,10 +25,13 @@ class ClientInfoBase : public Element {
         Vector<IPAddress> getAllAddresses() const;
 		void setQRV(const int qrv);
 		int getQRV() const;
+		int getUnsolicitedReportInterval() const;
+		void setUnsolicitedReportInterval(int value);
 		
 
 	private:
 		int f_qrv; /// The Querier Robustness Variable
+		int f_unsolRepInterval; /// The Unsolicited Report Interval, expressed in milliseconds
 		Vector<IPAddress> f_listenAddresses;
 		
 };

@@ -7,6 +7,7 @@
 #include <clicknet/ether.h>
 #include <click/timer.hh>
 #include <click/ipaddress.hh>
+#include <click/vector.hh>
 #include "clientinfobase.hh"
 
 CLICK_DECLS
@@ -40,28 +41,48 @@ public:
     // timer still here for debugging reasons
     void run_timer(Timer*);
 
-    void sendGroupSpecificReport(IPAddress ipAddr);
-    void sendGeneralReport();
+    void sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime);
+    void sendGeneralReport(int maxRespTime);
 
     /// --------
     /// HANDLERS
     /// --------
 
-    /*
-	Join a group
-    */
+    /**
+	 * Join a group
+     */
     static int handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
-    /*
-    Leave a group
-    */
+    
+    /**
+     * Leave a group
+     */
     static int handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
     void add_handlers();
 
 
 private:
+    /**
+     * Makes a packet according to the ip address given as argument (general query with no ip given - interface state change)
+     */
     Packet* make_packet(int groupRecordProto = 1, IPAddress changedIP = IPAddress());
+    /**
+     * Method used to make a combined packet for group specific queries
+     */
+    Packet* make_packet_combined(int groupRecordProto, Vector<IPAddress> includeAddresses);
+    static void handleExpiry(Timer* timer, void* data);
+
     ClientInfoBase* clientState;
 
+    /**
+     * Struct used to call the timer
+     */
+    struct TimerReportData {
+        IGMPReportGenerator* me;
+        int submissionsLeft;
+        int timeInterval;
+        Packet* packetToSend;
+    };
+    void expire(TimerReportData* data);
 };
 
 CLICK_ENDDECLS

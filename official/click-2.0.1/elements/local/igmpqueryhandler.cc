@@ -8,6 +8,7 @@
 #include "clientinfobase.hh"
 #include "igmpqueryhandler.hh"
 #include "igmppackets.h"
+#include <iostream>
 
 CLICK_DECLS
 
@@ -34,28 +35,32 @@ void IGMPQueryHandler::push(int, Packet* p) {
 void IGMPQueryHandler::handleQuery(Packet* p) {
     IGMP_query* igmph = (IGMP_query*)(p->data() + p->ip_header_length());
 
-    /**
-     * Handling of the Querier Robustness Variable
-     */
+    /// Handling of the Querier Robustness Variable
     const int qrv = igmph->QRV;
     if (qrv != 0) {
         clientState->setQRV(qrv);
     }
 
+    int maxResCode = igmph->Max_Resp_Code;
+    int maxRespTime = 0;
 
-    /**
-     * Handling of the Group address
-     * 
-     * If the Group Address field is zero, send a general report.
-     * Otherwise, send a group specific report
-     */
+    if (maxResCode < 128) {
+        maxRespTime = maxResCode;
+    } else {
+        int mant = maxResCode & 15;
+        int exp = (maxResCode & 112) >> 4;
+        std::cout << "mant: " << mant << ", exp: " << exp << std::endl;
+    }
+
+    maxRespTime *= 100; // The maxRespTime is represented in 1/10 of seconds
+
     IPAddress groupAddr = igmph->Group_Address;
     // click_chatter(groupAddr.unparse().c_str());
     if (groupAddr.empty() == true) {
-        reportGenerator->sendGeneralReport();
+        reportGenerator->sendGeneralReport(maxRespTime);
     }
     else {
-        reportGenerator->sendGroupSpecificReport(groupAddr);
+        reportGenerator->sendGroupSpecificReport(groupAddr, maxRespTime);
     }
 }
 

@@ -16,9 +16,10 @@ IGMPReportGenerator::IGMPReportGenerator() : clientState(0) {}
 IGMPReportGenerator::~IGMPReportGenerator() {}
 
 int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
-    if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElement, &clientState, cpEnd) < 0) return -1;
+    if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElementCast,"ClientInfoBase", &clientState, cpEnd) < 0) return -1;
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
 
+    srand(time(NULL));
 
     Timer* timer = new Timer(this);
     timer->initialize(this);
@@ -29,29 +30,37 @@ int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
 
 void IGMPReportGenerator::run_timer(Timer* timer) {
     return; 
-
-    // left the timer here for later potential debugging reasons
-    static int temp = 0;
-    int new_addr = 16909056+temp++;
-    // f_listenAddresses.push_back(IPAddress(htonl(new_addr)));
-    // if (Packet*q = this->make_packet(3, f_listenAddresses.back())) {
-    if (Packet*q = this->make_packet(RECORD_TYPE_MODE_EX)) {
-        output(0).push(q);
-        timer->schedule_after_msec(1000);
-    }
 }
 
-void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr) {
+void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
     bool isListenedTo = clientState->hasAddress(ipAddr);
 
     if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
-        output(0).push(q);
+        TimerReportData* data = new TimerReportData();
+        data->me = this;
+        data->submissionsLeft = 1;
+        data->timeInterval = maxRespTime;
+        data->packetToSend = q;
+
+        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        t->initialize(this);
+        float rng = (float) rand() / (float) RAND_MAX;
+        t->schedule_after_msec((int) (rng * maxRespTime));
     }
 }
 
-void IGMPReportGenerator::sendGeneralReport() {
+void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
     if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
-        output(0).push(q);
+        TimerReportData* data = new TimerReportData();
+        data->me = this;
+        data->submissionsLeft = 1;
+        data->timeInterval = maxRespTime;
+        data->packetToSend = q;
+
+        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        t->initialize(this);
+        float rng = (float) rand() / (float) RAND_MAX;
+        t->schedule_after_msec((int) (rng * maxRespTime));
     }
 }
 
@@ -69,10 +78,21 @@ int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk,
         return 0;
     }
 
-    /// add the element to the clientState and sent an IGMP report to the network
+    /// add the element to the clientState and send an IGMP report to the network
     thisElement->clientState->addAddress(input_ipaddr);
     if (Packet* q = thisElement->make_packet(RECORD_TYPE_IN_TO_EX, input_ipaddr)) {
-        thisElement->output(0).push(q);
+        int URI = thisElement->clientState->getUnsolicitedReportInterval();
+
+        TimerReportData* data = new TimerReportData();
+        data->me = thisElement;
+        data->submissionsLeft = thisElement->clientState->getQRV();
+        data->timeInterval = URI;
+        data->packetToSend = q;
+
+        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        t->initialize(thisElement);
+        float rng = (float) rand() / (float) RAND_MAX;
+        t->schedule_after_msec((int) (rng * URI));
     }
 
     return 0;
@@ -93,7 +113,18 @@ int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk
 
     thisElement->clientState->deleteAddress(input_ipaddr);
     if (Packet* q = thisElement->make_packet(RECORD_TYPE_EX_TO_IN, input_ipaddr)) {
-        thisElement->output(0).push(q);
+        int URI = thisElement->clientState->getUnsolicitedReportInterval();
+
+        TimerReportData* data = new TimerReportData();
+        data->me = thisElement;
+        data->submissionsLeft = thisElement->clientState->getQRV();
+        data->timeInterval = URI;
+        data->packetToSend = q;
+
+        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        t->initialize(thisElement);
+        float rng = (float) rand() / (float) RAND_MAX;
+        t->schedule_after_msec((int) (rng * URI));
     }
 
     return 0;
@@ -112,8 +143,6 @@ Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changed
     bool isGeneralReport = false;
     if (changedIP.empty() == true)
         isGeneralReport = true;
-
-    // click_chatter(isGeneralReport == true ? "general" : "not general");
 
     int amtGroupRecords = 0;
 
@@ -134,7 +163,7 @@ Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changed
 
     IGMP_report* igmph = (IGMP_report*)(q->data());
 
-    igmph->Type = 0x22;
+    igmph->Type = IGMP_REPORT_TYPE;
     igmph->Reserved1 = 0;
     igmph->Reserved2 = 0;
     igmph->Number_of_Group_Records = htons(amtGroupRecords);
@@ -161,6 +190,66 @@ Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changed
     igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeIGMPheader );
     return q;
 }
+
+Packet* IGMPReportGenerator::make_packet_combined(int groupRecordProto, Vector<IPAddress> includeAddresses) {
+    int amtGroupRecords = includeAddresses.size();
+
+    int sizeIGMPheader = sizeof(struct IGMP_report) + amtGroupRecords * sizeof(struct IGMP_grouprecord);
+    int headroom = sizeof(click_ether) + sizeof(click_ip);
+    WritablePacket* q = Packet::make(headroom, 0, sizeIGMPheader, 0);
+
+    if (!q)
+        return 0;
+
+    memset(q->data(), '\0', sizeIGMPheader);
+    IGMP_report* igmph = (IGMP_report*)(q->data());
+
+    igmph->Type = IGMP_REPORT_TYPE;
+    igmph->Reserved1 = 0;
+    igmph->Reserved2 = 0;
+    igmph->Number_of_Group_Records = htons(amtGroupRecords);
+
+    IGMP_grouprecord* record = (IGMP_grouprecord*)(igmph + 1);
+
+    for (int i = 0; i < amtGroupRecords; i++) {
+        if (clientState->hasAddress(includeAddresses.at(i)) == false) {
+            continue;
+        }
+        record->Record_Type = groupRecordProto; // uses the type specified in the argument 
+        record->Aux_Data_Len = 0; // not used in IGMPv3
+        record->Number_of_Sources = 0; // does not need to be implemented in our version
+        record->Multicast_Address = includeAddresses.at(i);
+
+        record = record + 1;
+    }
+
+    igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeIGMPheader );
+    return q;
+}
+
+
+void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
+    TimerReportData* reportData = (TimerReportData*) data;
+    assert(reportData);
+
+    WritablePacket* q = reportData->packetToSend->clone()->uniqueify();
+    reportData->me->output(0).push(q);
+
+    reportData->submissionsLeft = reportData->submissionsLeft - 1;
+
+    if (reportData->submissionsLeft != 0) {
+        float rng = (float) rand() / (float) RAND_MAX;
+        timer->schedule_after_msec((int) (rng * reportData->timeInterval));
+    } else {
+        reportData->me->expire(reportData);
+    }
+}
+
+void IGMPReportGenerator::expire(TimerReportData* data) {
+    // do nothing
+}
+
+
 
 CLICK_ENDDECLS
 EXPORT_ELEMENT(IGMPReportGenerator)

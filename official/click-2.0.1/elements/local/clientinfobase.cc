@@ -10,7 +10,7 @@
 
 CLICK_DECLS
 
-ClientInfoBase::ClientInfoBase() : f_qrv(2) {
+ClientInfoBase::ClientInfoBase() : f_qrv(2), f_unsolRepInterval(1000) {
     f_listenAddresses = Vector<IPAddress>();
 }
 ClientInfoBase::~ClientInfoBase() {}
@@ -66,6 +66,18 @@ void ClientInfoBase::setQRV(const int qrv) {
         click_chatter("setting QRV to 0, which should not happen.");
     }   /// TODO remove this part, still here to make sure nothing's going wrong
     f_qrv = qrv;
+}
+
+int ClientInfoBase::getQRV() const {
+    return f_qrv;
+}
+
+int ClientInfoBase::getUnsolicitedReportInterval() const {
+    return f_unsolRepInterval;
+}
+
+void ClientInfoBase::setUnsolicitedReportInterval(int value) {
+    f_unsolRepInterval = value;
 }
 
 
