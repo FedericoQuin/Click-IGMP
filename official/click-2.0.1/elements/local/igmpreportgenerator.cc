@@ -20,20 +20,10 @@ int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
 
     srand(time(NULL));
-
-    Timer* timer = new Timer(this);
-    timer->initialize(this);
-    timer->schedule_after_msec(1000);
-
-    return 0;
 }
 
-void IGMPReportGenerator::run_timer(Timer* timer) {
-    return; 
-}
 
 void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
-    std::cout << "trying to send a group specific query" << std::endl;
     float rng = (float) rand() / (float) RAND_MAX;
     int sendTime = (int) (rng * maxRespTime);
     
@@ -45,6 +35,17 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
         }
     }
 
+    if (f_groupTimers[ipAddr]) {
+        Timer* currentTimer = f_groupTimers[ipAddr];
+        int timeLeft = (currentTimer->expiry_steady() - Timestamp::now_steady()).msecval();
+        if (timeLeft > sendTime) {
+            /// reschedule the timer to run out sooner
+            const Timestamp sooner = Timestamp::now() + Timestamp((double) sendTime / 1000.0);
+            currentTimer->reschedule_at(sooner);
+        }
+        return;
+    }
+
     bool isListenedTo = clientState->hasAddress(ipAddr);
     if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
         TimerReportData* data = new TimerReportData();
@@ -52,31 +53,27 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
         data->submissionsLeft = 1;
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
-        data->isGeneralResponse = false;
+        data->type = Group;
+        data->groupAddr = ipAddr;
 
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(this);
         float rng = (float) rand() / (float) RAND_MAX;
         t->schedule_after_msec((int) (rng * maxRespTime));
+        f_groupTimers[ipAddr] = t;
     }
 }
 
 void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
-    // std::cout << "trying to answer a general query..." << std::endl;
-
     float rng = (float) rand() / (float) RAND_MAX;
     int sendTime = (int) (rng * maxRespTime);
 
     /// general report already planned before chosen delay?
     if (f_generalTimers.size() != 0) {
         int timeLeft = (f_generalTimers.at(0)->expiry_steady() - Timestamp::now_steady()).msecval();
-        // std::cout << "Time left scheduled general report (msec): " << timeLeft << std::endl;
-        // std::cout << "Time chosen (msec): " << sendTime << std::endl;
         if (timeLeft < sendTime) {
-        // std::cout << "Sending no report since the answer is scheduled sooner." << std::endl;
             return;
         }
-        // std::cout << "The report should be sent sooner than the scheduled one.\n" << std::endl;
     }
 
     for (int i = 0; i < f_generalTimers.size(); i++) {
@@ -84,14 +81,13 @@ void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
     }
     f_generalTimers = Vector<Timer*>();
 
-    // std::cout << "Sending general response." << std::endl << std::endl;
     if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
         TimerReportData* data = new TimerReportData();
         data->me = this;
         data->submissionsLeft = 1;
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
-        data->isGeneralResponse = true;
+        data->type = General;
 
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(this);
@@ -114,6 +110,11 @@ int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk,
         return 0;
     }
 
+    if (thisElement->f_stateChangeTimers[input_ipaddr]) {
+        thisElement->f_stateChangeTimers[input_ipaddr]->clear();
+        thisElement->f_stateChangeTimers[input_ipaddr] = 0;
+    }
+
     /// add the element to the clientState and send an IGMP report to the network
     thisElement->clientState->addAddress(input_ipaddr);
     if (Packet* q = thisElement->make_packet(RECORD_TYPE_IN_TO_EX, input_ipaddr)) {
@@ -124,9 +125,12 @@ int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk,
         data->submissionsLeft = thisElement->clientState->getQRV();
         data->timeInterval = URI;
         data->packetToSend = q;
+        data->type = StateChange;
+        data->groupAddr = input_ipaddr;
 
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(thisElement);
+        thisElement->f_stateChangeTimers[input_ipaddr] = t;
         float rng = (float) rand() / (float) RAND_MAX;
         t->schedule_after_msec((int) (rng * URI));
     }
@@ -147,6 +151,11 @@ int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk
         return 0;
     }
 
+    if (thisElement->f_stateChangeTimers[input_ipaddr]) {
+        thisElement->f_stateChangeTimers[input_ipaddr]->clear();
+        thisElement->f_stateChangeTimers[input_ipaddr] = 0;
+    }
+
     thisElement->clientState->deleteAddress(input_ipaddr);
     if (Packet* q = thisElement->make_packet(RECORD_TYPE_EX_TO_IN, input_ipaddr)) {
         int URI = thisElement->clientState->getUnsolicitedReportInterval();
@@ -156,9 +165,11 @@ int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk
         data->submissionsLeft = thisElement->clientState->getQRV();
         data->timeInterval = URI;
         data->packetToSend = q;
-
+        data->type = StateChange;
+        data->groupAddr = input_ipaddr;
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(thisElement);
+        thisElement->f_stateChangeTimers[input_ipaddr] = t;
         float rng = (float) rand() / (float) RAND_MAX;
         t->schedule_after_msec((int) (rng * URI));
     }
@@ -275,15 +286,25 @@ void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
 
     if (reportData->submissionsLeft != 0) {
         float rng = (float) rand() / (float) RAND_MAX;
-        timer->schedule_after_msec((int) (rng * reportData->timeInterval));
+        timer->reschedule_after_msec((int) (rng * reportData->timeInterval));
     } else {
         reportData->me->expire(reportData);
     }
 }
 
 void IGMPReportGenerator::expire(TimerReportData* data) {
-    if (data->isGeneralResponse == true && f_generalTimers.empty() == false) {
-        f_generalTimers.erase(f_generalTimers.begin());
+    switch (data->type) {
+        case (General): 
+            if (f_generalTimers.empty() == false) {
+                f_generalTimers.erase(f_generalTimers.begin());
+            }
+            break;
+        case (Group):
+            f_groupTimers[data->groupAddr] = 0;
+            break;
+        case (StateChange):
+            f_stateChangeTimers[data->groupAddr] = 0;
+            break;
     }
 }
 

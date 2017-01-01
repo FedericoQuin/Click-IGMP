@@ -29,6 +29,8 @@ It will create an empty INCLUDE package when the leave_group handler is called
 
 */
 
+enum ReportType {General, Group, StateChange};
+
 class IGMPReportGenerator : public Element {
 public:
     IGMPReportGenerator();
@@ -38,9 +40,6 @@ public:
     const char* port_count() const { return "0/1"; }
     const char* processing() const { return PUSH; }
     int configure(Vector<String>&, ErrorHandler*);
-
-    // timer still here for debugging reasons
-    void run_timer(Timer*);
 
     void sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime);
     void sendGeneralReport(int maxRespTime);
@@ -79,19 +78,17 @@ private:
         int submissionsLeft;
         int timeInterval;
         Packet* packetToSend;
-        bool isGeneralResponse;
+        ReportType type;
+        IPAddress groupAddr;
     };
     static void handleExpiry(Timer* timer, void* data);
     void expire(TimerReportData* data);
 
-    struct TimerAndData {
-        Timer* timer;
-        TimerReportData* data;
-    };
 
     ClientInfoBase* clientState;
     Vector<Timer*> f_generalTimers;
-    HashTable<IPAddress, TimerAndData*> f_groupTimers;
+    HashTable<IPAddress, Timer*> f_groupTimers;
+    HashTable<IPAddress, Timer*> f_stateChangeTimers;
 };
 
 CLICK_ENDDECLS
