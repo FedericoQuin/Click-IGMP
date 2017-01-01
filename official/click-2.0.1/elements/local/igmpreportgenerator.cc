@@ -33,14 +33,26 @@ void IGMPReportGenerator::run_timer(Timer* timer) {
 }
 
 void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
-    bool isListenedTo = clientState->hasAddress(ipAddr);
+    std::cout << "trying to send a group specific query" << std::endl;
+    float rng = (float) rand() / (float) RAND_MAX;
+    int sendTime = (int) (rng * maxRespTime);
+    
+    /// general report already planned before chosen delay?
+    if (f_generalTimers.size() != 0) {
+        int timeLeft = (f_generalTimers.at(0)->expiry_steady() - Timestamp::now_steady()).msecval();
+        if (timeLeft < sendTime) {
+            return;
+        }
+    }
 
+    bool isListenedTo = clientState->hasAddress(ipAddr);
     if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
         TimerReportData* data = new TimerReportData();
         data->me = this;
         data->submissionsLeft = 1;
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
+        data->isGeneralResponse = false;
 
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(this);
@@ -50,17 +62,41 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
 }
 
 void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
+    // std::cout << "trying to answer a general query..." << std::endl;
+
+    float rng = (float) rand() / (float) RAND_MAX;
+    int sendTime = (int) (rng * maxRespTime);
+
+    /// general report already planned before chosen delay?
+    if (f_generalTimers.size() != 0) {
+        int timeLeft = (f_generalTimers.at(0)->expiry_steady() - Timestamp::now_steady()).msecval();
+        // std::cout << "Time left scheduled general report (msec): " << timeLeft << std::endl;
+        // std::cout << "Time chosen (msec): " << sendTime << std::endl;
+        if (timeLeft < sendTime) {
+        // std::cout << "Sending no report since the answer is scheduled sooner." << std::endl;
+            return;
+        }
+        // std::cout << "The report should be sent sooner than the scheduled one.\n" << std::endl;
+    }
+
+    for (int i = 0; i < f_generalTimers.size(); i++) {
+        f_generalTimers.at(i)->clear();
+    }
+    f_generalTimers = Vector<Timer*>();
+
+    // std::cout << "Sending general response." << std::endl << std::endl;
     if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
         TimerReportData* data = new TimerReportData();
         data->me = this;
         data->submissionsLeft = 1;
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
+        data->isGeneralResponse = true;
 
         Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
         t->initialize(this);
-        float rng = (float) rand() / (float) RAND_MAX;
-        t->schedule_after_msec((int) (rng * maxRespTime));
+        t->schedule_after_msec(sendTime);
+        f_generalTimers.push_back(t);
     }
 }
 
@@ -246,7 +282,9 @@ void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
 }
 
 void IGMPReportGenerator::expire(TimerReportData* data) {
-    // do nothing
+    if (data->isGeneralResponse == true && f_generalTimers.empty() == false) {
+        f_generalTimers.erase(f_generalTimers.begin());
+    }
 }
 
 

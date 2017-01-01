@@ -8,6 +8,7 @@
 #include <click/timer.hh>
 #include <click/ipaddress.hh>
 #include <click/vector.hh>
+#include <click/hashtable.hh>
 #include "clientinfobase.hh"
 
 CLICK_DECLS
@@ -69,20 +70,28 @@ private:
      * Method used to make a combined packet for group specific queries
      */
     Packet* make_packet_combined(int groupRecordProto, Vector<IPAddress> includeAddresses);
-    static void handleExpiry(Timer* timer, void* data);
-
-    ClientInfoBase* clientState;
 
     /**
-     * Struct used to call the timer
+     * Struct used for the timers
      */
     struct TimerReportData {
         IGMPReportGenerator* me;
         int submissionsLeft;
         int timeInterval;
         Packet* packetToSend;
+        bool isGeneralResponse;
     };
+    static void handleExpiry(Timer* timer, void* data);
     void expire(TimerReportData* data);
+
+    struct TimerAndData {
+        Timer* timer;
+        TimerReportData* data;
+    };
+
+    ClientInfoBase* clientState;
+    Vector<Timer*> f_generalTimers;
+    HashTable<IPAddress, TimerAndData*> f_groupTimers;
 };
 
 CLICK_ENDDECLS
