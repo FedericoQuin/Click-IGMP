@@ -44,7 +44,7 @@ elementclass Router {
 	server_arpq :: ARPQuerier($server_address)
 		-> output;
 
-	filter0::RouterMulticastFilter(0,table)
+	filter0::RouterMulticastFilter(1,table)
 		->server_arpq;
 
 	filter0[1]
@@ -69,7 +69,7 @@ elementclass Router {
 		// -> ToDump(dumps/allPacketsNetwork1.dump)
 		-> [1]output;
 
-	filter1::RouterMulticastFilter(1,table)
+	filter1::RouterMulticastFilter(2,table)
 		->client1_arpq;
 
 	filter1[1]
@@ -94,7 +94,7 @@ elementclass Router {
 		// -> ToDump(dumps/allPacketsNetwork2.dump)
 		-> [2]output;
 
-	filter2::RouterMulticastFilter(2,table)
+	filter2::RouterMulticastFilter(3,table)
 		->client2_arpq;
 
 	filter2[1]
@@ -214,18 +214,28 @@ elementclass Router {
 		->filter2;
 		
 	querrier::IGMPQueryGenerator
+		-> pswitch::PaintSwitch[0]
 		-> SplitterQueries::Tee(3)
 
 	SplitterQueries[0]
-		-> IPEncapIGMPQuery($server_address)
+		-> encap0::IPEncapIGMPQuery($server_address)
 		-> filter0;
 
 	SplitterQueries[1]
-		-> IPEncapIGMPQuery($client1_address)
+		-> encap1::IPEncapIGMPQuery($client1_address)
 		-> filter1;
 
 	SplitterQueries[2]
-		-> IPEncapIGMPQuery($client2_address)
+		-> encap2::IPEncapIGMPQuery($client2_address)
 		-> filter2;
+
+	pswitch[1]
+		->encap0;
+
+	pswitch[2]
+		->encap1;
+
+	pswitch[3]
+		->encap2;
 }
 

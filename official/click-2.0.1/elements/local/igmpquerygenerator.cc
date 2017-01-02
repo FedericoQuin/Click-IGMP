@@ -6,6 +6,7 @@
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
 #include <click/timer.hh>
+#include <click/packet_anno.hh>
 
 #include <time.h>
 #include <stdlib.h>
@@ -21,13 +22,13 @@ int IGMPQueryGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
 	return 0;
 }
 
-void IGMPQueryGenerator::push(uint8_t QRV, unsigned int MRT ,unsigned int QQIT,IPAddress GroupIP){
-	if(Packet* something = make_packet(QRV,MRT,QQIT,GroupIP)){
+void IGMPQueryGenerator::push(uint8_t QRV, unsigned int MRT ,unsigned int QQIT,IPAddress GroupIP, uint8_t interface){
+	if(Packet* something = make_packet(QRV,MRT,QQIT,GroupIP,interface)){
 		output(0).push(something);
 	}
 }
 
-Packet* IGMPQueryGenerator::make_packet(uint8_t QRV,unsigned int MRT, unsigned int QQIT ,IPAddress GroupIP) {
+Packet* IGMPQueryGenerator::make_packet(uint8_t QRV,unsigned int MRT, unsigned int QQIT ,IPAddress GroupIP, uint8_t interface) {
 	int headroom = sizeof(click_ether) + sizeof(click_ip);
 	WritablePacket* q = Packet::make(headroom, 0, sizeof(struct IGMP_query), 0);
 	if (!q)
@@ -66,7 +67,7 @@ Packet* IGMPQueryGenerator::make_packet(uint8_t QRV,unsigned int MRT, unsigned i
 	igmph->QQIC = QQIC;
 	igmph->Number_of_Sources = 0;
 	igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeof(IGMP_query));
-
+	q->set_anno_u8(PAINT_ANNO_OFFSET, interface);
 	return q;
 }
 

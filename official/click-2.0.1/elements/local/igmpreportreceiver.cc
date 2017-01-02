@@ -28,7 +28,7 @@ void IGMPReportReceiver::push(int, Packet *p){
 	}
 	const click_ip *ipheader = p->ip_header();
 
-	uint8_t sourceInterface = p->anno_u8(PAINT_ANNO_OFFSET)-1;
+	uint8_t sourceInterface = p->anno_u8(PAINT_ANNO_OFFSET);
 
 	IGMP_report* igmp = (IGMP_report*)(p->data()+p->ip_header_length());
 
