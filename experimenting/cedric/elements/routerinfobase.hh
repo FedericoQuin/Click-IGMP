@@ -83,11 +83,12 @@ class RouterInfoBase : public Element {
 		static void deleteInterfaceFromGroup(Timer*,void*);
 
 		IGMPQueryGenerator *_querier;
-		HashTable<uint8_t,HashTable<IPAddress, Timer*> > timers;
+		HashTable<uint8_t,HashTable<IPAddress, Timer*> > deletetimers;
+		Timer * queryTimer;
 		HashTable<uint8_t,Vector<IPAddress> > table;
 		uint8_t QRV;
-		unsigned int time;
-		unsigned int waitingTime;
+		unsigned int QQIT;
+		unsigned int MRT;
 		
 };
 

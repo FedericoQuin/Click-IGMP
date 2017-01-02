@@ -48,6 +48,12 @@ void IGMPReportReceiver::push(int, Packet *p){
 			//STEL NOG EEN QUERY
 			infoBase->sendQuery(groupAddess,sourceInterface);
 		}
+		else if(type == RECORD_TYPE_MODE_EX){
+			infoBase->addIPToGroup(groupAddess,sourceInterface);
+		}
+		else if(type == RECORD_TYPE_MODE_IN){
+			//WIL NIET MEER LUISTEREN
+		}
 
 	}
 	

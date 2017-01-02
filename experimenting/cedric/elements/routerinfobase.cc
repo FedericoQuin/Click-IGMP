@@ -13,8 +13,8 @@ CLICK_DECLS
 RouterInfoBase::RouterInfoBase()
 {
 	QRV = 2;
-	time = 125;
-	waitingTime = 100;
+	MRT = 100;
+	QQIT = 125;
 }
 
 RouterInfoBase::~RouterInfoBase()
@@ -24,12 +24,15 @@ int RouterInfoBase::configure(Vector<String> &conf, ErrorHandler *errh) {
 	if ( cp_va_kparse(conf, this, errh,
 		"QUERIER", cpkM + cpkP, cpElement, &_querier,
 		"QRV", 0, cpByte, &QRV,
-		"INTERVAL", 0, cpUnsigned, &time,
-		"WAIT", 0, cpUnsigned, &waitingTime,
+		"QQIT", 0, cpUnsigned, &QQIT,
+		"MRT", 0, cpUnsigned, &MRT,
 	cpEnd) < 0 ) return -1;
-	if(waitingTime >= time){
+	if(MRT/10 >= QQIT){
 		return -1;
 	}
+	queryTimer = new Timer(&sendQuery,this);
+	queryTimer->initialize(this);
+	queryTimer->schedule_after_sec(QQIT);
 	return 0;
 }
 
@@ -37,7 +40,7 @@ void RouterInfoBase::deleteInterfaceFromGroup(Timer* timer, void* userdata){
 	RouterInfoBase *thisElement = (RouterInfoBase*) userdata;
 	uint8_t interface;
 	IPAddress IP;
-	for(HashTable<uint8_t,HashTable<IPAddress, Timer*> >::iterator i = thisElement->timers.begin(); i != thisElement->timers.end(); i++){
+	for(HashTable<uint8_t,HashTable<IPAddress, Timer*> >::iterator i = thisElement->deletetimers.begin(); i != thisElement->deletetimers.end(); i++){
 		HashTable<IPAddress,Timer*> secondary = i.value();
 		for(HashTable<IPAddress,Timer*>::iterator j = secondary.begin(); j != secondary.end(); j++){
 			if(j->second == timer){
@@ -48,44 +51,37 @@ void RouterInfoBase::deleteInterfaceFromGroup(Timer* timer, void* userdata){
 	}
 
 	thisElement->deleteIPFromGroup(IP,interface);
-	thisElement->timers[interface].erase(IP);
 }
 
 void RouterInfoBase::sendQuery(Timer* timer, void* userdata){
 	RouterInfoBase *thisElement = (RouterInfoBase*) userdata;
-	for(HashTable<uint8_t,HashTable<IPAddress,Timer*> >::iterator i = thisElement->timers.begin(); i != thisElement->timers.end(); i++){
-		for(HashTable<IPAddress,Timer*>::iterator j = i.value().begin(); j != i.value().end(); j++){
-			if(j->second == timer){
-				thisElement->_querier->push(thisElement->QRV,j->first);
-				if(j->second){
-					delete j->second;
-				}
-				j->second = new Timer(&deleteInterfaceFromGroup,userdata);
-				j->second->initialize(thisElement);
-				j->second->schedule_after_sec(thisElement->waitingTime);
-				return;
+	thisElement->_querier->push(thisElement->QRV,thisElement->MRT,thisElement->QQIT,0);
+	for(HashTable<uint8_t,Vector<IPAddress> >::iterator i = thisElement->table.begin(); i != thisElement->table.end(); i++){
+		for(Vector<IPAddress>::iterator j = i->second.begin(); j < i->second.end(); j++){
+			if(not thisElement->deletetimers[i->first][*j]){
+				thisElement->deletetimers[i->first][*j] = new Timer(&deleteInterfaceFromGroup,userdata);
+				thisElement->deletetimers[i->first][*j]->initialize(thisElement);
+				thisElement->deletetimers[i->first][*j]->schedule_after_msec(100*thisElement->MRT);
 			}
 		}
 	}
+	thisElement->queryTimer->reschedule_after_sec(thisElement->QQIT);
 }
 
 void RouterInfoBase::sendQuery(IPAddress IP, unsigned int interface){
-	_querier->push(QRV,IP);
-	if(timers[interface][IP]){
-		delete timers[interface][IP];
+	_querier->push(QRV,MRT,QQIT,IP);
+	if(deletetimers[interface][IP]){
+		return;
 	}
-	timers[interface][IP] = new Timer(&deleteInterfaceFromGroup,this);
-	timers[interface][IP]->initialize(this);
-	timers[interface][IP]->schedule_after_sec(waitingTime);
+	deletetimers[interface][IP] = new Timer(&deleteInterfaceFromGroup,this);
+	deletetimers[interface][IP]->initialize(this);
+	deletetimers[interface][IP]->schedule_after_msec(100*MRT);
 }
 
 void RouterInfoBase::addIPToGroup(IPAddress groupIP, uint8_t joinInterface){
-	if (timers[joinInterface][groupIP]){
-		delete timers[joinInterface][groupIP];
+	if (deletetimers[joinInterface][groupIP]){
+		delete deletetimers[joinInterface][groupIP];
 	}
-	timers[joinInterface][groupIP] = new Timer(&sendQuery,this);
-	timers[joinInterface][groupIP]->initialize(this);
-	timers[joinInterface][groupIP]->schedule_after_sec(time);
 	for (Vector<IPAddress>::iterator i = table[joinInterface].begin(); i != table[joinInterface].end(); i++){
 		if (*i == groupIP){
 			return;
@@ -98,7 +94,6 @@ void RouterInfoBase::deleteIPFromGroup(IPAddress groupIP, uint8_t UnjoinInterfac
 	for (Vector<IPAddress>::iterator i = table[UnjoinInterface].begin(); i != table[UnjoinInterface].end(); i++){
 		if (*i == groupIP){
 			table[UnjoinInterface].erase(i);
-			std::cout<<"DELETED"<<std::endl;
 			return;
 		}
 	}
@@ -136,8 +131,8 @@ uint8_t RouterInfoBase::getQRV(){
 
 void RouterInfoBase::add_handlers(){
 	add_write_handler("set_qrv", &handleSetQRV, (void*)0);
-	add_write_handler("set_interval", &handleSetInterval, (void*)0);
-	add_write_handler("set_wait",&handleSetWait,(void*)0);
+	add_write_handler("set_qqic", &handleSetInterval, (void*)0);
+	add_write_handler("set_qrt",&handleSetWait,(void*)0);
 }
 
 
@@ -146,14 +141,14 @@ int RouterInfoBase::handleSetInterval(const String& conf, Element* e, void* thun
 	RouterInfoBase* thisElement = (RouterInfoBase*) e;
 	unsigned int value = 0;
 	if (cp_va_kparse(conf, thisElement, errh, 
-        "INTERVAL", cpkM+cpkP, cpUnsigned, &value,
+        "QQIT", cpkM+cpkP, cpUnsigned, &value,
         cpEnd)
     < 0 ) return -1;
 
-	if(value<=thisElement->waitingTime){
+	if(value<=thisElement->MRT/10){
 		return -1;
 	}
-	thisElement->time = value;
+	thisElement->QQIT = value;
 	return 0;
 }
 
@@ -161,14 +156,14 @@ int RouterInfoBase::handleSetWait(const String& conf, Element* e, void* thunk, E
 	RouterInfoBase* thisElement = (RouterInfoBase*) e;
 	unsigned int value = 0;
 	if (cp_va_kparse(conf, thisElement, errh, 
-        "WAIT", cpkM+cpkP, cpUnsigned, &value,
+        "MRT", cpkM+cpkP, cpUnsigned, &value,
         cpEnd)
     < 0 ) return -1;
 
-	if(value >= thisElement->time){
+	if(value/10 >= thisElement->QQIT){
 		return -1;
 	}
-	thisElement->waitingTime = value;
+	thisElement->MRT = value;
 	return 0;
 }
 

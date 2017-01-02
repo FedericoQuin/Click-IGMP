@@ -31,12 +31,9 @@ public:
 	const char* port_count() const { return "0/1"; }
 	const char* processing() const { return PUSH; }
 	int configure(Vector<String>&, ErrorHandler*);
-	Packet* make_packet(uint8_t,IPAddress);
-	void push(uint8_t, IPAddress);
+	Packet* make_packet(uint8_t,unsigned int, unsigned int,IPAddress);
+	void push(uint8_t,unsigned int , unsigned int, IPAddress);
 
-private:
-	unsigned int f_mrc;
-	unsigned int f_qqic;
 };
 
 CLICK_ENDDECLS
