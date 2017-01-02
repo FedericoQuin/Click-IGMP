@@ -35,6 +35,11 @@ void IGMPQueryHandler::push(int, Packet* p) {
 void IGMPQueryHandler::handleQuery(Packet* p) {
     IGMP_query* igmph = (IGMP_query*)(p->data() + p->ip_header_length());
 
+    const int type = igmph->Type;
+    if (type != IGMP_QUERY_TYPE) {
+        return;
+    }
+
     /// Handling of the Querier Robustness Variable
     const int qrv = igmph->QRV;
     if (qrv != 0) {

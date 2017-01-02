@@ -50,7 +50,7 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
     if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
         TimerReportData* data = new TimerReportData();
         data->me = this;
-        data->submissionsLeft = 1;
+        data->submissionsLeft = clientState->getQRV();
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
         data->type = Group;
@@ -84,7 +84,7 @@ void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
     if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
         TimerReportData* data = new TimerReportData();
         data->me = this;
-        data->submissionsLeft = 1;
+        data->submissionsLeft = clientState->getQRV();
         data->timeInterval = maxRespTime;
         data->packetToSend = q;
         data->type = General;
@@ -283,7 +283,6 @@ void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
     reportData->me->output(0).push(q);
 
     reportData->submissionsLeft = reportData->submissionsLeft - 1;
-
     if (reportData->submissionsLeft != 0) {
         float rng = (float) rand() / (float) RAND_MAX;
         timer->reschedule_after_msec((int) (rng * reportData->timeInterval));

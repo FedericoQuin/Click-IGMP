@@ -69,10 +69,10 @@ void RouterInfoBase::sendQuery(Timer* timer, void* userdata){
 }
 
 void RouterInfoBase::sendQuery(IPAddress IP, unsigned int interface){
-	_querier->push(QRV,MRT,QQIT,IP);
 	if(deletetimers[interface][IP]){
 		return;
 	}
+	_querier->push(QRV,MRT,QQIT,IP);
 	deletetimers[interface][IP] = new Timer(&deleteInterfaceFromGroup,this);
 	deletetimers[interface][IP]->initialize(this);
 	deletetimers[interface][IP]->schedule_after_msec(100*MRT);
@@ -80,7 +80,7 @@ void RouterInfoBase::sendQuery(IPAddress IP, unsigned int interface){
 
 void RouterInfoBase::addIPToGroup(IPAddress groupIP, uint8_t joinInterface){
 	if (deletetimers[joinInterface][groupIP]){
-		delete deletetimers[joinInterface][groupIP];
+		deletetimers[joinInterface].erase(groupIP);
 	}
 	for (Vector<IPAddress>::iterator i = table[joinInterface].begin(); i != table[joinInterface].end(); i++){
 		if (*i == groupIP){
