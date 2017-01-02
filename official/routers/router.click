@@ -16,7 +16,7 @@
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
-	table::RouterInfoBase
+	table::RouterInfoBase(querrier, QQIT 10, MRT 50);
 	
 	// Shared IP input path and routing table
 	ip :: Strip(14)
@@ -213,5 +213,6 @@ elementclass Router {
 	splitter[2]
 		->filter2;
 		
+	querrier::IGMPQueryGenerator->IPEncapIGMPQuery($client1_address)->splitter;
 }
 

@@ -18,6 +18,10 @@ elementclass Client {
 		-> [1]output;
 	
 	rt[1]
+		-> IPClass::IPClassifier(ip proto IGMP,-)
+		-> IGMPQueryHandler(clientState, reportSource)
+
+	IPClass[1]
 		-> filter::ClientMulticastFilter(STATE clientState)
 		-> [1]output
 

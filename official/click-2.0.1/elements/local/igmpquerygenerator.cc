@@ -13,59 +13,57 @@
 
 CLICK_DECLS
 
-IGMPQueryGenerator::IGMPQueryGenerator() : f_mrc(0), f_qrv(0), f_qqic(0) {}
+IGMPQueryGenerator::IGMPQueryGenerator(){}
 
 IGMPQueryGenerator::~IGMPQueryGenerator() {}
 
 int IGMPQueryGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
-
-	if ( cp_va_kparse(conf, this, errh,
-		"MRC", cpkM + cpkP, cpUnsigned, &f_mrc,
-		"QRV", 0, cpUnsigned, &f_qrv,
-		"QQIC", 0, cpUnsigned, &f_qqic,
-	cpEnd) < 0 ) return -1;
-
-	Timer* timer = new Timer(this);
-	timer->initialize(this);
-	timer->schedule_after_msec(125 * 1000);
-
 	return 0;
 }
 
-void IGMPQueryGenerator::sendGroupSpecificQuery(IPAddress addr) {
-	if (Packet* q = this->make_packet(addr)) {
-		output(0).push(q);
+void IGMPQueryGenerator::push(uint8_t QRV, unsigned int MRT ,unsigned int QQIT,IPAddress GroupIP){
+	if(Packet* something = make_packet(QRV,MRT,QQIT,GroupIP)){
+		output(0).push(something);
 	}
 }
 
-
-void IGMPQueryGenerator::run_timer(Timer* timer) {
-	if (Packet* q = this->make_packet()) {
-		output(0).push(q);
-		timer->reschedule_after_msec(125 * 1000); // TODO still hardcoded, make this adjustable according to a variable in infobase
-	}
-}
-
-/**
- * Makes by default a general query, or a group specific query when specifying an IP address.
- */
-Packet* IGMPQueryGenerator::make_packet(IPAddress groupAddr) {
+Packet* IGMPQueryGenerator::make_packet(uint8_t QRV,unsigned int MRT, unsigned int QQIT ,IPAddress GroupIP) {
 	int headroom = sizeof(click_ether) + sizeof(click_ip);
 	WritablePacket* q = Packet::make(headroom, 0, sizeof(struct IGMP_query), 0);
 	if (!q)
 		return 0;
 	
+	//nog MRC EN QQIC
+	uint8_t MRC = 0;
+	uint8_t QQIC = 0;
+
+	if(MRT < 128){
+		MRC = uint8_t(MRT);
+	}
+	else{
+		//NOG TE DOEN
+	}
+
+	if (QQIT < 128){
+		QQIC = uint8_t(QQIT);
+	}
+	else{
+		//OOK NOG TE DOEN
+		uint8_t firstBit = 1;
+
+	}
 	// memset(q->data(), '\0', sizeof(struct IGMP_query));
+
 	memset(q->data(), '\0', q->length());
 	IGMP_query* igmph = (IGMP_query*)(q->data());
 
 	igmph->Type = 0x11;
-	igmph->Max_Resp_Code = f_mrc;
-	igmph->Group_Address = groupAddr;
+	igmph->Max_Resp_Code = MRC;
+	igmph->Group_Address = GroupIP; //IPAddress("226.1.1.1");
 	igmph->Resv = 0;
 	igmph->S = 0;
-	igmph->QRV = f_qrv;
-	igmph->QQIC = f_qqic;
+	igmph->QRV = QRV;
+	igmph->QQIC = QQIC;
 	igmph->Number_of_Sources = 0;
 	igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeof(IGMP_query));
 

@@ -26,6 +26,9 @@ int RouterMulticastFilter::configure(Vector<String> &conf, ErrorHandler *errh) {
 void RouterMulticastFilter::push(int, Packet *p){
 	const click_ip *ipheader = p->ip_header();
 	IPAddress groupIP= ipheader->ip_dst;
+	if(groupIP == IPAddress("224.0.0.1")){
+		output(0).push(p);
+	}
 	Vector<IPAddress> addresses = infoBase->getGroups(interface);
 
 	for(Vector<IPAddress>::iterator i = addresses.begin(); i!=addresses.end(); i++){

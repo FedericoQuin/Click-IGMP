@@ -44,10 +44,11 @@ void IPEncapIGMPQuery::push(int, Packet* p) {
     iph->ip_dst = dst.empty() == true ? IPAddress("224.0.0.1").in_addr() : dst.in_addr();
     iph->ip_p = IP_PROTO_IGMP;
     iph->ip_tos = 0;
-    iph->ip_sum = click_in_cksum( (const unsigned char*)iph, sizeof(click_ip));
+    iph->ip_len = htons(q->length());
     
     q->set_dst_ip_anno(dst.empty() == true ? IPAddress("224.0.0.1") : dst);
     q->set_ip_header(iph, sizeof(click_ip));
+    iph->ip_sum = click_in_cksum( (const unsigned char*)iph, sizeof(click_ip));
 
     output(0).push(p);
 }
