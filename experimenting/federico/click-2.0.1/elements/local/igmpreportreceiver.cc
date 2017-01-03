@@ -28,7 +28,7 @@ void IGMPReportReceiver::push(int, Packet *p){
 	}
 	const click_ip *ipheader = p->ip_header();
 
-	uint8_t sourceInterface = p->anno_u8(PAINT_ANNO_OFFSET)-1;
+	uint8_t sourceInterface = p->anno_u8(PAINT_ANNO_OFFSET);
 
 	IGMP_report* igmp = (IGMP_report*)(p->data()+p->ip_header_length());
 
@@ -46,7 +46,13 @@ void IGMPReportReceiver::push(int, Packet *p){
 		}
 		else if(type == RECORD_TYPE_EX_TO_IN){
 			//STEL NOG EEN QUERY
-			infoBase->deleteIPFromGroup(groupAddess,sourceInterface);
+			infoBase->sendQuery(groupAddess,sourceInterface);
+		}
+		else if(type == RECORD_TYPE_MODE_EX){
+			infoBase->addIPToGroup(groupAddess,sourceInterface);
+		}
+		else if(type == RECORD_TYPE_MODE_IN){
+			//WIL NIET MEER LUISTEREN
 		}
 
 	}

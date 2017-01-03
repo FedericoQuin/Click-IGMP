@@ -12,11 +12,12 @@
 //	[2]: packets sent to the 192.168.3.0/24 network
 //  [3]: packets destined for the router itself
 
-table::RouterInfoBase
 
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
+	table::RouterInfoBase(querrier, QQIT 125, MRT 100);
+	
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 		-> CheckIPHeader
@@ -28,7 +29,7 @@ elementclass Router {
 					$server_address:ipnet 1,
 					$client1_address:ipnet 2,
 					$client2_address:ipnet 3,
-					255.255.255.255/0 4);
+					224.0.0.0/4 4);
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee (3);
@@ -43,7 +44,7 @@ elementclass Router {
 	server_arpq :: ARPQuerier($server_address)
 		-> output;
 
-	filter0::RouterMulticastFilter(0,table)
+	filter0::RouterMulticastFilter(1,table)
 		->server_arpq;
 
 	filter0[1]
@@ -65,10 +66,10 @@ elementclass Router {
 		-> [1]output;
 
 	client1_arpq :: ARPQuerier($client1_address)
-		-> ToDump(dumps/allPacketsNetwork1.dump)
+		// -> ToDump(dumps/allPacketsNetwork1.dump)
 		-> [1]output;
 
-	filter1::RouterMulticastFilter(1,table)
+	filter1::RouterMulticastFilter(2,table)
 		->client1_arpq;
 
 	filter1[1]
@@ -90,14 +91,14 @@ elementclass Router {
 		-> [2]output;
 
 	client2_arpq :: ARPQuerier($client2_address)
-		-> ToDump(dumps/allPacketsNetwork2.dump)
+		// -> ToDump(dumps/allPacketsNetwork2.dump)
 		-> [2]output;
 
-	filter2::RouterMulticastFilter(2,table)
+	filter2::RouterMulticastFilter(3,table)
 		->client2_arpq;
 
 	filter2[1]
-		-> ToDump(foo.dump)
+		// -> ToDump(foo.dump)
 		-> Discard;
 
 	client2_class[1]
@@ -195,6 +196,10 @@ elementclass Router {
 	rt[4] 
 		-> IPClass::IPClassifier(ip proto IGMP,-)
 		-> checker::CheckIGMPHeader
+		-> packetSorter::IGMPSorter()
+		-> Discard   /// do something with queries here
+
+	packetSorter[1]
 		-> IGMPReportReceiver(INFOBASE table)
 
 	checker[1]
@@ -212,5 +217,29 @@ elementclass Router {
 	splitter[2]
 		->filter2;
 		
+	querrier::IGMPQueryGenerator
+		-> pswitch::PaintSwitch[0]
+		-> SplitterQueries::Tee(3)
+
+	SplitterQueries[0]
+		-> encap0::IPEncapIGMPQuery($server_address)
+		-> filter0;
+
+	SplitterQueries[1]
+		-> encap1::IPEncapIGMPQuery($client1_address)
+		-> filter1;
+
+	SplitterQueries[2]
+		-> encap2::IPEncapIGMPQuery($client2_address)
+		-> filter2;
+
+	pswitch[1]
+		->encap0;
+
+	pswitch[2]
+		->encap1;
+
+	pswitch[3]
+		->encap2;
 }
 

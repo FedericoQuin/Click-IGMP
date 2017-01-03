@@ -14,7 +14,8 @@ ClientMulticastFilter::ClientMulticastFilter() : clientState(0) {}
 ClientMulticastFilter::~ClientMulticastFilter() {}
 
 int ClientMulticastFilter::configure(Vector<String>& conf, ErrorHandler* errh) {
-    if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElement, &clientState, cpEnd) < 0) return -1;
+    if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElementCast, "ClientInfoBase", &clientState, cpEnd) < 0) return -1;
+    
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
     return 0;
 }
