@@ -23,6 +23,36 @@ int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
 }
 
 
+void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
+    float rng = (float) rand() / (float) RAND_MAX;
+    int sendTime = (int) (rng * maxRespTime);
+
+    /// general report already planned before chosen delay?
+    if (f_generalTimers.size() != 0) {
+        int timeLeft = (f_generalTimers.at(0)->expiry_steady() - Timestamp::now_steady()).msecval();
+        if (timeLeft < sendTime) {
+            return;
+        }
+    }
+    /// clear all the general reports and send a new one after the chosen time
+    for (int i = 0; i < f_generalTimers.size(); i++) {
+        f_generalTimers.at(i)->clear();
+    }
+    f_generalTimers = Vector<Timer*>();
+
+    TimerReportData* data = new TimerReportData();
+    data->me = this;
+    data->submissionsLeft = clientState->getQRV();
+    data->timeInterval = maxRespTime;
+    data->type = General;
+
+    Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+    t->initialize(this);
+    t->schedule_after_msec(sendTime);
+    f_generalTimers.push_back(t);
+}
+
+
 void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
     float rng = (float) rand() / (float) RAND_MAX;
     int sendTime = (int) (rng * maxRespTime);
@@ -35,65 +65,30 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
         }
     }
 
+    /// Group specific report already scheduled?
     if (f_groupTimers[ipAddr]) {
         Timer* currentTimer = f_groupTimers[ipAddr];
         int timeLeft = (currentTimer->expiry_steady() - Timestamp::now_steady()).msecval();
         if (timeLeft > sendTime) {
-            /// reschedule the timer to run out sooner
+            /// reschedule the timer to run out sooner since the chosen time is sooner than the scheduled one
             const Timestamp sooner = Timestamp::now() + Timestamp((double) sendTime / 1000.0);
             currentTimer->reschedule_at(sooner);
         }
         return;
     }
 
-    bool isListenedTo = clientState->hasAddress(ipAddr);
-    if (Packet* q = this->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), ipAddr)) {
-        TimerReportData* data = new TimerReportData();
-        data->me = this;
-        data->submissionsLeft = clientState->getQRV();
-        data->timeInterval = maxRespTime;
-        data->packetToSend = q;
-        data->type = Group;
-        data->groupAddr = ipAddr;
 
-        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
-        t->initialize(this);
-        float rng = (float) rand() / (float) RAND_MAX;
-        t->schedule_after_msec((int) (rng * maxRespTime));
-        f_groupTimers[ipAddr] = t;
-    }
-}
+    TimerReportData* data = new TimerReportData();
+    data->me = this;
+    data->submissionsLeft = clientState->getQRV();
+    data->timeInterval = maxRespTime;
+    data->type = Group;
+    data->groupAddr = ipAddr;
 
-void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
-    float rng = (float) rand() / (float) RAND_MAX;
-    int sendTime = (int) (rng * maxRespTime);
-
-    /// general report already planned before chosen delay?
-    if (f_generalTimers.size() != 0) {
-        int timeLeft = (f_generalTimers.at(0)->expiry_steady() - Timestamp::now_steady()).msecval();
-        if (timeLeft < sendTime) {
-            return;
-        }
-    }
-
-    for (int i = 0; i < f_generalTimers.size(); i++) {
-        f_generalTimers.at(i)->clear();
-    }
-    f_generalTimers = Vector<Timer*>();
-
-    if (Packet* q = this->make_packet(RECORD_TYPE_MODE_EX)) {
-        TimerReportData* data = new TimerReportData();
-        data->me = this;
-        data->submissionsLeft = clientState->getQRV();
-        data->timeInterval = maxRespTime;
-        data->packetToSend = q;
-        data->type = General;
-
-        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
-        t->initialize(this);
-        t->schedule_after_msec(sendTime);
-        f_generalTimers.push_back(t);
-    }
+    Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+    t->initialize(this);
+    t->schedule_after_msec(sendTime);
+    f_groupTimers[ipAddr] = t;
 }
 
 
@@ -279,8 +274,19 @@ void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
     TimerReportData* reportData = (TimerReportData*) data;
     assert(reportData);
 
-    WritablePacket* q = reportData->packetToSend->clone()->uniqueify();
-    reportData->me->output(0).push(q);
+    Packet* p = 0;
+
+    ReportType type = reportData->type;
+    if (type == General) {
+        p = reportData->me->make_packet(RECORD_TYPE_MODE_EX);
+    } else if (type == Group) {
+        bool isListenedTo = reportData->me->clientState->hasAddress(reportData->groupAddr);
+        p = reportData->me->make_packet((isListenedTo == true ? RECORD_TYPE_MODE_EX : RECORD_TYPE_MODE_IN), reportData->groupAddr);
+    } else if (type == StateChange) {
+        p = reportData->packetToSend->clone()->uniqueify();
+    }
+
+    reportData->me->output(0).push(p);
 
     reportData->submissionsLeft = reportData->submissionsLeft - 1;
     if (reportData->submissionsLeft != 0) {

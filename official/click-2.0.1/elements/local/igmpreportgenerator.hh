@@ -24,8 +24,8 @@ Creates a IGMPReportGenerator packet.
 =d
 
 It pushes an IGMPReportGenerator packet out without an IP-header.
-It will create an empty EXLUDE package when the join_group handler is called
-It will create an empty INCLUDE package when the leave_group handler is called
+It will create an EXLUDE package when the join_group handler is called
+It will create an INCLUDE package when the leave_group handler is called
 
 */
 
@@ -41,8 +41,8 @@ public:
     const char* processing() const { return PUSH; }
     int configure(Vector<String>&, ErrorHandler*);
 
-    void sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime);
     void sendGeneralReport(int maxRespTime);
+    void sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime);
 
     /// --------
     /// HANDLERS
