@@ -35,32 +35,15 @@ Packet* IGMPQueryGenerator::make_packet(uint8_t QRV,unsigned int MRT, unsigned i
 		return 0;
 	
 	//nog MRC EN QQIC
-	uint8_t MRC = 0;
-	uint8_t QQIC = 0;
-
-	if(MRT < 128){
-		MRC = uint8_t(MRT);
-	}
-	else{
-		//NOG TE DOEN
-	}
-
-	if (QQIT < 128){
-		QQIC = uint8_t(QQIT);
-	}
-	else{
-		//OOK NOG TE DOEN
-		uint8_t firstBit = 1;
-
-	}
-	// memset(q->data(), '\0', sizeof(struct IGMP_query));
+	uint8_t MRC = uint8_t(MRT);
+	uint8_t QQIC = uint8_t(QQIT);
 
 	memset(q->data(), '\0', q->length());
 	IGMP_query* igmph = (IGMP_query*)(q->data());
 
-	igmph->Type = 0x11;
+	igmph->Type = IGMP_QUERY_TYPE;
 	igmph->Max_Resp_Code = MRC;
-	igmph->Group_Address = GroupIP; //IPAddress("226.1.1.1");
+	igmph->Group_Address = GroupIP;
 	igmph->Resv = 0;
 	igmph->S = 0;
 	igmph->QRV = QRV;

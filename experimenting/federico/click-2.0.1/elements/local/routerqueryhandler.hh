@@ -32,8 +32,8 @@ class RouterQueryHandler : public Element {
 
     private:
         void handleQuery(Packet* p);
-
-        Vector<RouterReportGenerator> f_generators;
+        RouterInfoBase* routerState;
+        RouterReportGenerator* reportGenerator;
 };
 
 CLICK_ENDDECLS

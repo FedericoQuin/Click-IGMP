@@ -9,6 +9,7 @@
 #include "igmpqueryhandler.hh"
 #include "igmppackets.h"
 #include <iostream>
+#include <math.h>
 
 CLICK_DECLS
 
@@ -54,7 +55,7 @@ void IGMPQueryHandler::handleQuery(Packet* p) {
     } else {
         int mant = maxResCode & 15;
         int exp = (maxResCode & 112) >> 4;
-        std::cout << "mant: " << mant << ", exp: " << exp << std::endl;
+        maxRespTime = (mant | 0x10) << (exp + 3);
     }
 
     maxRespTime *= 100; // The maxRespTime is represented in 1/10 of seconds

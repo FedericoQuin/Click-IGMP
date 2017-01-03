@@ -6,6 +6,7 @@
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
 #include <click/timer.hh>
+#include <click/packet_anno.hh>
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
@@ -148,6 +149,8 @@ Packet* RouterReportGenerator::make_packet(uint8_t interface, int groupRecordPro
     }
 
     igmph->Checksum = click_in_cksum( (const unsigned char*)igmph, sizeIGMPheader );
+    q->set_anno_u8(PAINT_ANNO_OFFSET, interface);
+
     return q;
 }
 
