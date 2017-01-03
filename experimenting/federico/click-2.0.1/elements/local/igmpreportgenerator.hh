@@ -10,6 +10,7 @@
 #include <click/vector.hh>
 #include <click/hashtable.hh>
 #include "clientinfobase.hh"
+#include "igmppackets.h"
 
 CLICK_DECLS
 
@@ -29,7 +30,6 @@ It will create an INCLUDE package when the leave_group handler is called
 
 */
 
-enum ReportType {General, Group, StateChange};
 
 class IGMPReportGenerator : public Element {
 public:

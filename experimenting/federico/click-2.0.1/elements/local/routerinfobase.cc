@@ -104,6 +104,23 @@ Vector<IPAddress> RouterInfoBase::getGroups(uint8_t interface){
 	return table[interface];
 }
 
+Vector<IPAddress> RouterInfoBase::getAllGroups() {
+	Vector<IPAddress> addresses = Vector<IPAddress>();
+	for (HashTable<uint8_t,Vector<IPAddress> >::iterator i = table.begin(); i != table.end(); i++) {
+		for (Vector<IPAddress>::iterator j = i->second.begin(); j < i->second.end(); j++) {
+			if (vector_contains(addresses, *j) == false) {
+				addresses.push_back(*j);
+			}
+		}
+	}
+	return addresses;
+}
+
+bool RouterInfoBase::hasAddress(IPAddress addr) {
+	Vector<IPAddress> addresses = this->getAllGroups();
+	return vector_contains(addresses, addr);
+}
+
 void RouterInfoBase::setQRV(uint8_t value){
 	if (value > 7){
 		value = 0;
@@ -165,6 +182,15 @@ int RouterInfoBase::handleSetWait(const String& conf, Element* e, void* thunk, E
 	}
 	thisElement->MRT = value;
 	return 0;
+}
+
+bool vector_contains(const Vector<IPAddress>& v, const IPAddress& target) {
+	for (Vector<IPAddress>::const_iterator i = v.begin(); i != v.end(); i++) {
+		if (*i == target) {
+			return true;
+		}
+	}
+	return false;
 }
 
 CLICK_ENDDECLS

@@ -196,10 +196,12 @@ elementclass Router {
 	rt[4] 
 		-> IPClass::IPClassifier(ip proto IGMP,-)
 		-> checker::CheckIGMPHeader
-		-> packetSorter::IGMPSorter()
+		-> igmpPacketSorter::IGMPSorter()
 		-> Discard   /// do something with queries here
+		/// TODO add ipclassifier here to distinguish between superior router and router on same subnet
 
-	packetSorter[1]
+
+	igmpPacketSorter[1]
 		-> IGMPReportReceiver(INFOBASE table)
 
 	checker[1]

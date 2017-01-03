@@ -20,6 +20,7 @@ int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
 
     srand(time(NULL));
+    return 0;
 }
 
 
