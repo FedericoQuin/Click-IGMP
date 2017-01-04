@@ -17,6 +17,7 @@ elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
 	table::RouterInfoBase(querrier, QQIT 125, MRT 100);
+	reportGenerator::RouterReportGenerator(table);
 	
 	// Shared IP input path and routing table
 	ip :: Strip(14)
@@ -197,8 +198,22 @@ elementclass Router {
 		-> IPClass::IPClassifier(ip proto IGMP,-)
 		-> checker::CheckIGMPHeader
 		-> igmpPacketSorter::IGMPSorter()
-		-> Discard   /// do something with queries here
 		/// TODO add ipclassifier here to distinguish between superior router and router on same subnet
+		-> RouterQueryHandler(table, reportGenerator)
+
+	reportGenerator
+		-> reportSwitch::PaintSwitch();
+	reportSwitch[0]
+		-> Discard;
+	reportSwitch[1]
+		-> IPEncap(2, $server_address, 224.0.0.22, TTL 1)
+		-> filter0;
+	reportSwitch[2]
+		-> IPEncap(2, $client1_address, 224.0.0.22, TTL 1)
+		-> filter1;
+	reportSwitch[3]
+		-> IPEncap(2, $client2_address, 224.0.0.22, TTL 1)
+		-> filter2;
 
 
 	igmpPacketSorter[1]

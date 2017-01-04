@@ -28,6 +28,8 @@ void RouterMulticastFilter::push(int, Packet *p){
 	IPAddress groupIP= ipheader->ip_dst;
 	if(groupIP == IPAddress("224.0.0.1")){
 		output(0).push(p);
+	} else if (groupIP == IPAddress("224.0.0.22")) {
+		output(0).push(p);
 	}
 	Vector<IPAddress> addresses = infoBase->getGroups(interface);
 

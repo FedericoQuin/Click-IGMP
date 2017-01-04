@@ -23,4 +23,4 @@ F	* Adjust IGMPReportGenerator to send a report multiple times (dependent on QRV
 	---------------------
 
 F	% Add handling/execution of querier election
-F 	% Add router side query processing/answering
+F 	* Add router side query processing/answering
