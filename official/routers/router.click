@@ -199,8 +199,8 @@ elementclass Router {
 		-> checker::CheckIGMPHeader
 		-> igmpPacketSorter::IGMPSorter()
 		-> subnetClass::IPClassifier($server_address:ipnet,
-									$client1_address:ipnet,
-									$client2_address:ipnet,
+									 $client1_address:ipnet,
+									 $client2_address:ipnet,
 									 -);
 	subnetClass[0]
 		-> QuerierElection(table, $server_address);

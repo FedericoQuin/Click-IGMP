@@ -43,7 +43,7 @@ void ClientReportGenerator::sendGeneralReport(int maxRespTime) {
 
     TimerReportData* data = new TimerReportData();
     data->me = this;
-    data->submissionsLeft = clientState->getQRV();
+    data->submissionsLeft = 1;
     data->timeInterval = maxRespTime;
     data->type = General;
 
@@ -81,7 +81,7 @@ void ClientReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRes
 
     TimerReportData* data = new TimerReportData();
     data->me = this;
-    data->submissionsLeft = clientState->getQRV();
+    data->submissionsLeft = 1;
     data->timeInterval = maxRespTime;
     data->type = Group;
     data->groupAddr = ipAddr;
