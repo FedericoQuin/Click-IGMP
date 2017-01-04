@@ -198,8 +198,18 @@ elementclass Router {
 		-> IPClass::IPClassifier(ip proto IGMP,-)
 		-> checker::CheckIGMPHeader
 		-> igmpPacketSorter::IGMPSorter()
-		/// TODO add ipclassifier here to distinguish between superior router and router on same subnet
-		-> RouterQueryHandler(table, reportGenerator)
+		-> subnetClass::IPClassifier($server_address:ipnet,
+									$client1_address:ipnet,
+									$client2_address:ipnet,
+									 -);
+	subnetClass[0]
+		-> QuerierElection(table, $server_address);
+	subnetClass[1]
+		-> QuerierElection(table, $client1_address);
+	subnetClass[2]
+		-> QuerierElection(table, $client2_address);
+	subnetClass[3]
+		-> RouterQueryHandler(table, reportGenerator);
 
 	reportGenerator
 		-> reportSwitch::PaintSwitch();

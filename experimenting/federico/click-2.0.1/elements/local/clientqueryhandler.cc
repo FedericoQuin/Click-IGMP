@@ -6,34 +6,34 @@
 #include <clicknet/ether.h>
 #include <click/timer.hh>
 #include "clientinfobase.hh"
-#include "igmpqueryhandler.hh"
+#include "clientqueryhandler.hh"
 #include "igmppackets.h"
 #include <iostream>
 #include <math.h>
 
 CLICK_DECLS
 
-IGMPQueryHandler::IGMPQueryHandler() : clientState(0), reportGenerator(0) {}
+ClientQueryHandler::ClientQueryHandler() : clientState(0), reportGenerator(0) {}
 
-IGMPQueryHandler::~IGMPQueryHandler() {}
+ClientQueryHandler::~ClientQueryHandler() {}
 
-int IGMPQueryHandler::configure(Vector<String>& conf, ErrorHandler* errh) {
+int ClientQueryHandler::configure(Vector<String>& conf, ErrorHandler* errh) {
     if (cp_va_kparse(conf, this, errh, 
         "STATE", cpkM+cpkP, cpElementCast, "ClientInfoBase", &clientState,
-        "RPT", cpkM+cpkP, cpElementCast, "IGMPReportGenerator", &reportGenerator,
+        "RPT", cpkM+cpkP, cpElementCast, "ClientReportGenerator", &reportGenerator,
      cpEnd) < 0) return -1;
     
     if (clientState == 0) return errh->error("Wrong element given as first argument, should be a ClientInfoBase element.");
-    if (reportGenerator == 0) return errh->error("Wrong element given as second argument, should be a IGMPReport element.");
+    if (reportGenerator == 0) return errh->error("Wrong element given as second argument, should be a ClientReportGenerator element.");
 
     return 0;
 }
 
-void IGMPQueryHandler::push(int, Packet* p) {
+void ClientQueryHandler::push(int, Packet* p) {
     this->handleQuery(p);
 }
 
-void IGMPQueryHandler::handleQuery(Packet* p) {
+void ClientQueryHandler::handleQuery(Packet* p) {
     IGMP_query* igmph = (IGMP_query*)(p->data() + p->ip_header_length());
 
     const int type = igmph->Type;
@@ -73,4 +73,4 @@ void IGMPQueryHandler::handleQuery(Packet* p) {
 
 CLICK_ENDDECLS
 
-EXPORT_ELEMENT(IGMPQueryHandler)
+EXPORT_ELEMENT(ClientQueryHandler)

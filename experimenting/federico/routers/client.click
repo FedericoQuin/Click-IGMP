@@ -19,7 +19,7 @@ elementclass Client {
 	
 	rt[1]
 		-> IPClass::IPClassifier(ip proto IGMP,-)
-		-> IGMPQueryHandler(clientState, reportSource)
+		-> ClientQueryHandler(clientState, reportSource)
 
 	IPClass[1]
 		-> filter::ClientMulticastFilter(STATE clientState)
@@ -62,7 +62,7 @@ elementclass Client {
 	in_cl[2]
 		-> ip;
 
-	reportSource::IGMPReportGenerator(STATE clientState)
+	reportSource::ClientReportGenerator(STATE clientState)
 		-> IPEncap(2, $address, 224.0.0.22, TTL 1)
 		-> CheckIPHeader()
 		-> arpq

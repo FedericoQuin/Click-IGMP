@@ -15,6 +15,7 @@ RouterInfoBase::RouterInfoBase()
 	QRV = 2;
 	MRT = 100;
 	QQIT = 125;
+	queriesSuppressed = false;
 }
 
 RouterInfoBase::~RouterInfoBase()
@@ -55,7 +56,9 @@ void RouterInfoBase::deleteInterfaceFromGroup(Timer* timer, void* userdata){
 
 void RouterInfoBase::sendQuery(Timer* timer, void* userdata){
 	RouterInfoBase *thisElement = (RouterInfoBase*) userdata;
-	thisElement->_querier->push(thisElement->QRV,thisElement->MRT,thisElement->QQIT,0,0);
+	if (thisElement->queriesSuppressed == false) {
+		thisElement->_querier->push(thisElement->QRV,thisElement->MRT,thisElement->QQIT,0,0);
+	}
 	for(HashTable<uint8_t,Vector<IPAddress> >::iterator i = thisElement->table.begin(); i != thisElement->table.end(); i++){
 		for(Vector<IPAddress>::iterator j = i->second.begin(); j < i->second.end(); j++){
 			if(not thisElement->deletetimers[i->first][*j]){
@@ -72,7 +75,9 @@ void RouterInfoBase::sendQuery(IPAddress IP, unsigned int interface){
 	if(deletetimers[interface][IP]){
 		return;
 	}
-	_querier->push(QRV,MRT,QQIT,IP,interface);
+	if (queriesSuppressed == false) {
+		_querier->push(QRV,MRT,QQIT,IP,interface);
+	}
 	deletetimers[interface][IP] = new Timer(&deleteInterfaceFromGroup,this);
 	deletetimers[interface][IP]->initialize(this);
 	deletetimers[interface][IP]->schedule_after_msec(100*MRT);
@@ -102,6 +107,39 @@ void RouterInfoBase::deleteIPFromGroup(IPAddress groupIP, uint8_t UnjoinInterfac
 
 Vector<IPAddress> RouterInfoBase::getGroups(uint8_t interface){
 	return table[interface];
+}
+
+Vector<IPAddress> RouterInfoBase::getAllGroups() {
+	Vector<IPAddress> addresses = Vector<IPAddress>();
+	for (HashTable<uint8_t,Vector<IPAddress> >::iterator i = table.begin(); i != table.end(); i++) {
+		for (Vector<IPAddress>::iterator j = i->second.begin(); j < i->second.end(); j++) {
+			if (vector_contains(addresses, *j) == false) {
+				addresses.push_back(*j);
+			}
+		}
+	}
+	return addresses;
+}
+
+bool RouterInfoBase::hasAddress(IPAddress addr) {
+	Vector<IPAddress> addresses = this->getAllGroups();
+	return vector_contains(addresses, addr);
+}
+
+void RouterInfoBase::suppressQueries() {
+	queriesSuppressed = true;
+}
+
+void RouterInfoBase::allowQueries() {
+	queriesSuppressed = false;
+}
+
+void RouterInfoBase::setQQIT(int value) {
+	QQIT = value;
+}
+
+void RouterInfoBase::setMRT(int value) {
+	MRT = value;
 }
 
 void RouterInfoBase::setQRV(uint8_t value){
@@ -165,6 +203,15 @@ int RouterInfoBase::handleSetWait(const String& conf, Element* e, void* thunk, E
 	}
 	thisElement->MRT = value;
 	return 0;
+}
+
+bool vector_contains(const Vector<IPAddress>& v, const IPAddress& target) {
+	for (Vector<IPAddress>::const_iterator i = v.begin(); i != v.end(); i++) {
+		if (*i == target) {
+			return true;
+		}
+	}
+	return false;
 }
 
 CLICK_ENDDECLS

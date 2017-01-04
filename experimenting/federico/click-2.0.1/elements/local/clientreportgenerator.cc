@@ -1,7 +1,7 @@
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
-#include "igmpreportgenerator.hh"
+#include "clientreportgenerator.hh"
 #include "igmppackets.h"
 #include <clicknet/ip.h>
 #include <clicknet/ether.h>
@@ -12,18 +12,19 @@
 
 CLICK_DECLS
 
-IGMPReportGenerator::IGMPReportGenerator() : clientState(0) {}
-IGMPReportGenerator::~IGMPReportGenerator() {}
+ClientReportGenerator::ClientReportGenerator() : clientState(0) {}
+ClientReportGenerator::~ClientReportGenerator() {}
 
-int IGMPReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
+int ClientReportGenerator::configure(Vector<String>& conf, ErrorHandler* errh) {
     if (cp_va_kparse(conf, this, errh, "STATE", cpkM+cpkP, cpElementCast,"ClientInfoBase", &clientState, cpEnd) < 0) return -1;
     if (clientState == 0) return errh->error("Wrong element given as argument, should be a ClientInfoBase element.");
 
     srand(time(NULL));
+    return 0;
 }
 
 
-void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
+void ClientReportGenerator::sendGeneralReport(int maxRespTime) {
     float rng = (float) rand() / (float) RAND_MAX;
     int sendTime = (int) (rng * maxRespTime);
 
@@ -46,14 +47,14 @@ void IGMPReportGenerator::sendGeneralReport(int maxRespTime) {
     data->timeInterval = maxRespTime;
     data->type = General;
 
-    Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+    Timer* t = new Timer(&ClientReportGenerator::handleExpiry, data);
     t->initialize(this);
     t->schedule_after_msec(sendTime);
     f_generalTimers.push_back(t);
 }
 
 
-void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
+void ClientReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespTime) {
     float rng = (float) rand() / (float) RAND_MAX;
     int sendTime = (int) (rng * maxRespTime);
     
@@ -85,15 +86,15 @@ void IGMPReportGenerator::sendGroupSpecificReport(IPAddress ipAddr, int maxRespT
     data->type = Group;
     data->groupAddr = ipAddr;
 
-    Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+    Timer* t = new Timer(&ClientReportGenerator::handleExpiry, data);
     t->initialize(this);
     t->schedule_after_msec(sendTime);
     f_groupTimers[ipAddr] = t;
 }
 
 
-int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
-    IGMPReportGenerator* thisElement = (IGMPReportGenerator*) e;
+int ClientReportGenerator::handleJoin(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
+    ClientReportGenerator* thisElement = (ClientReportGenerator*) e;
     IPAddress input_ipaddr;
 
     if (cp_va_kparse(conf, thisElement, errh, 
@@ -123,7 +124,7 @@ int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk,
         data->type = StateChange;
         data->groupAddr = input_ipaddr;
 
-        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        Timer* t = new Timer(&ClientReportGenerator::handleExpiry, data);
         t->initialize(thisElement);
         thisElement->f_stateChangeTimers[input_ipaddr] = t;
         float rng = (float) rand() / (float) RAND_MAX;
@@ -133,8 +134,8 @@ int IGMPReportGenerator::handleJoin(const String& conf, Element* e, void* thunk,
     return 0;
 }
 
-int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
-    IGMPReportGenerator* thisElement = (IGMPReportGenerator*) e;
+int ClientReportGenerator::handleLeave(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
+    ClientReportGenerator* thisElement = (ClientReportGenerator*) e;
     IPAddress input_ipaddr;
 
     if (cp_va_kparse(conf, thisElement, errh, 
@@ -162,7 +163,7 @@ int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk
         data->packetToSend = q;
         data->type = StateChange;
         data->groupAddr = input_ipaddr;
-        Timer* t = new Timer(&IGMPReportGenerator::handleExpiry, data);
+        Timer* t = new Timer(&ClientReportGenerator::handleExpiry, data);
         t->initialize(thisElement);
         thisElement->f_stateChangeTimers[input_ipaddr] = t;
         float rng = (float) rand() / (float) RAND_MAX;
@@ -172,13 +173,13 @@ int IGMPReportGenerator::handleLeave(const String& conf, Element* e, void* thunk
     return 0;
 }
 
-void IGMPReportGenerator::add_handlers() {
+void ClientReportGenerator::add_handlers() {
     add_write_handler("join_group", &handleJoin, (void*)0);
     add_write_handler("leave_group", &handleLeave, (void*)0);
 }
 
 
-Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changedIP) {
+Packet* ClientReportGenerator::make_packet(int groupRecordProto, IPAddress changedIP) {
 
     Vector<IPAddress> listenAddresses = clientState->getAllAddresses();
 
@@ -233,7 +234,7 @@ Packet* IGMPReportGenerator::make_packet(int groupRecordProto, IPAddress changed
     return q;
 }
 
-Packet* IGMPReportGenerator::make_packet_combined(int groupRecordProto, Vector<IPAddress> includeAddresses) {
+Packet* ClientReportGenerator::make_packet_combined(int groupRecordProto, Vector<IPAddress> includeAddresses) {
     int amtGroupRecords = includeAddresses.size();
 
     int sizeIGMPheader = sizeof(struct IGMP_report) + amtGroupRecords * sizeof(struct IGMP_grouprecord);
@@ -270,7 +271,7 @@ Packet* IGMPReportGenerator::make_packet_combined(int groupRecordProto, Vector<I
 }
 
 
-void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
+void ClientReportGenerator::handleExpiry(Timer* timer, void* data) {
     TimerReportData* reportData = (TimerReportData*) data;
     assert(reportData);
 
@@ -297,7 +298,7 @@ void IGMPReportGenerator::handleExpiry(Timer* timer, void* data) {
     }
 }
 
-void IGMPReportGenerator::expire(TimerReportData* data) {
+void ClientReportGenerator::expire(TimerReportData* data) {
     switch (data->type) {
         case (General): 
             if (f_generalTimers.empty() == false) {
@@ -316,4 +317,4 @@ void IGMPReportGenerator::expire(TimerReportData* data) {
 
 
 CLICK_ENDDECLS
-EXPORT_ELEMENT(IGMPReportGenerator)
+EXPORT_ELEMENT(ClientReportGenerator)

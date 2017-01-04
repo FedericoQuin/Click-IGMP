@@ -46,4 +46,9 @@ struct IGMP_grouprecord {
     uint32_t Multicast_Address;
 };
 
+/*
+Enum used in report generators
+*/
+enum ReportType {General, Group, StateChange};
+
 #endif

@@ -15,6 +15,7 @@ RouterInfoBase::RouterInfoBase()
 	QRV = 2;
 	MRT = 100;
 	QQIT = 125;
+	queriesSuppressed = false;
 }
 
 RouterInfoBase::~RouterInfoBase()
@@ -55,7 +56,9 @@ void RouterInfoBase::deleteInterfaceFromGroup(Timer* timer, void* userdata){
 
 void RouterInfoBase::sendQuery(Timer* timer, void* userdata){
 	RouterInfoBase *thisElement = (RouterInfoBase*) userdata;
-	thisElement->_querier->push(thisElement->QRV,thisElement->MRT,thisElement->QQIT,0,0);
+	if (thisElement->queriesSuppressed == false) {
+		thisElement->_querier->push(thisElement->QRV,thisElement->MRT,thisElement->QQIT,0,0);
+	}
 	for(HashTable<uint8_t,Vector<IPAddress> >::iterator i = thisElement->table.begin(); i != thisElement->table.end(); i++){
 		for(Vector<IPAddress>::iterator j = i->second.begin(); j < i->second.end(); j++){
 			if(not thisElement->deletetimers[i->first][*j]){
@@ -72,7 +75,9 @@ void RouterInfoBase::sendQuery(IPAddress IP, unsigned int interface){
 	if(deletetimers[interface][IP]){
 		return;
 	}
-	_querier->push(QRV,MRT,QQIT,IP,interface);
+	if (queriesSuppressed == false) {
+		_querier->push(QRV,MRT,QQIT,IP,interface);
+	}
 	deletetimers[interface][IP] = new Timer(&deleteInterfaceFromGroup,this);
 	deletetimers[interface][IP]->initialize(this);
 	deletetimers[interface][IP]->schedule_after_msec(100*MRT);
@@ -119,6 +124,22 @@ Vector<IPAddress> RouterInfoBase::getAllGroups() {
 bool RouterInfoBase::hasAddress(IPAddress addr) {
 	Vector<IPAddress> addresses = this->getAllGroups();
 	return vector_contains(addresses, addr);
+}
+
+void RouterInfoBase::suppressQueries() {
+	queriesSuppressed = true;
+}
+
+void RouterInfoBase::allowQueries() {
+	queriesSuppressed = false;
+}
+
+void RouterInfoBase::setQQIT(int value) {
+	QQIT = value;
+}
+
+void RouterInfoBase::setMRT(int value) {
+	MRT = value;
 }
 
 void RouterInfoBase::setQRV(uint8_t value){

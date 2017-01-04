@@ -22,5 +22,5 @@ F	* Adjust IGMPReportGenerator to send a report multiple times (dependent on QRV
 	LESSER PRIORITY TASKS
 	---------------------
 
-F	% Add handling/execution of querier election
+F	* Add handling/execution of querier election (NOTE: NOT YET TESTED)
 F 	* Add router side query processing/answering

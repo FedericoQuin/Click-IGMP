@@ -58,6 +58,22 @@ class RouterInfoBase : public Element {
 		/*
 		Checks if the router has any interface listening to the given IPAddress
 		*/
+		void suppressQueries();
+		/*
+		Suppresses the sending of queries, as a result of querier election.
+		*/
+		void allowQueries();
+		/*
+		Allows the sending of queries, after querier election
+		*/
+		void setQQIT(int);
+		/*
+		Sets the QQIT value
+		*/
+		void setMRT(int);
+		/*
+		Sets the MRT value
+		*/
 		uint8_t getQRV();
 		/*
 		Get the QRV value. Default value is 2.
@@ -97,7 +113,7 @@ class RouterInfoBase : public Element {
 		uint8_t QRV;
 		unsigned int QQIT;
 		unsigned int MRT;
-		
+		bool queriesSuppressed;
 };
 
 bool vector_contains(const Vector<IPAddress>& v, const IPAddress& target);

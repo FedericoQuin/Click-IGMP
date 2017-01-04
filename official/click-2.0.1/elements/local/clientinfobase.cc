@@ -63,8 +63,8 @@ Vector<IPAddress> ClientInfoBase::getAllAddresses() const {
 
 void ClientInfoBase::setQRV(const int qrv) {
     if (qrv == 0) {
-        click_chatter("setting QRV to 0, which should not happen.");
-    }   /// TODO remove this part, still here to make sure nothing's going wrong
+        return;
+    }   
     f_qrv = qrv;
 }
 

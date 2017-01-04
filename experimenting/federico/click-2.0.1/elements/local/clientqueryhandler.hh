@@ -1,5 +1,5 @@
-#ifndef CLICK_IGMPQUERYHANDLER_HH
-#define CLICK_IGMPQUERYHANDLER_HH
+#ifndef CLICK_CLIENTQUERYHANDLER_HH
+#define CLICK_CLIENTQUERYHANDLER_HH
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
@@ -7,16 +7,16 @@
 #include <clicknet/ether.h>
 #include <click/timer.hh>
 #include "clientinfobase.hh"
-#include "igmpreportgenerator.hh"
+#include "clientreportgenerator.hh"
 
 CLICK_DECLS
 
-class IGMPQueryHandler : public Element { 
+class ClientQueryHandler : public Element { 
 	public:
-		IGMPQueryHandler();
-		~IGMPQueryHandler();
+		ClientQueryHandler();
+		~ClientQueryHandler();
 		
-		const char *class_name() const	{ return "IGMPQueryHandler"; }
+		const char *class_name() const	{ return "ClientQueryHandler"; }
 		const char *port_count() const	{ return "1/0"; }
 		const char *processing() const	{ return PUSH; }
 		int configure(Vector<String>&, ErrorHandler*);
@@ -26,7 +26,7 @@ class IGMPQueryHandler : public Element {
 	private:
 		void handleQuery(Packet* p);
 		ClientInfoBase* clientState;
-        IGMPReportGenerator* reportGenerator;
+        ClientReportGenerator* reportGenerator;
 
 };
 

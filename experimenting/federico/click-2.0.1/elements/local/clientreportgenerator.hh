@@ -1,5 +1,5 @@
-#ifndef CLICK_IGMPREPORTGENERATOR_HH
-#define CLICK_IGMPREPORTGENERATOR_HH
+#ifndef CLICK_CLIENTREPORTGENERATOR_HH
+#define CLICK_CLIENTREPORTGENERATOR_HH
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
@@ -16,27 +16,27 @@ CLICK_DECLS
 
 /*
 =c
-IGMPReportGenerator()
+ClientReportGenerator()
 
 =s local
 
-Creates a IGMPReportGenerator packet.
+Creates a ClientReportGenerator packet.
 
 =d
 
-It pushes an IGMPReportGenerator packet out without an IP-header.
+It pushes an ClientReportGenerator packet out without an IP-header.
 It will create an EXLUDE package when the join_group handler is called
 It will create an INCLUDE package when the leave_group handler is called
 
 */
 
 
-class IGMPReportGenerator : public Element {
+class ClientReportGenerator : public Element {
 public:
-    IGMPReportGenerator();
-    ~IGMPReportGenerator();
+    ClientReportGenerator();
+    ~ClientReportGenerator();
 
-    const char* class_name() const { return "IGMPReportGenerator"; }
+    const char* class_name() const { return "ClientReportGenerator"; }
     const char* port_count() const { return "0/1"; }
     const char* processing() const { return PUSH; }
     int configure(Vector<String>&, ErrorHandler*);
@@ -74,7 +74,7 @@ private:
      * Struct used for the timers
      */
     struct TimerReportData {
-        IGMPReportGenerator* me;
+        ClientReportGenerator* me;
         int submissionsLeft;
         int timeInterval;
         Packet* packetToSend;
