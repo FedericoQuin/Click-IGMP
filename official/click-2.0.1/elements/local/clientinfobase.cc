@@ -80,6 +80,23 @@ void ClientInfoBase::setUnsolicitedReportInterval(int value) {
     f_unsolRepInterval = value;
 }
 
+int ClientInfoBase::handleSetUnsolicited(const String& conf, Element* e, void* thunk, ErrorHandler* errh) {
+    ClientInfoBase* thisElement = (ClientInfoBase*) e;
+    int newValue;
+
+    if (cp_va_kparse(conf, thisElement, errh, 
+        "INTERVAL", cpkM+cpkP, cpInteger, &newValue,
+        cpEnd)
+    < 0 ) return -1;
+    thisElement->setUnsolicitedReportInterval(newValue);
+    return 0;
+}
+
+void ClientInfoBase::add_handlers() {
+    add_write_handler("setUnsolicitedReportInterval", &handleSetUnsolicited, (void*)0);
+}
+
+
 
 CLICK_ENDDECLS
 EXPORT_ELEMENT(ClientInfoBase)

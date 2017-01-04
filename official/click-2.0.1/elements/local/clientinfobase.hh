@@ -22,12 +22,18 @@ class ClientInfoBase : public Element {
 		void addAddress(IPAddress);
 		void deleteAddress(IPAddress);
 		bool hasAddress(IPAddress) const;
-        Vector<IPAddress> getAllAddresses() const;
+		Vector<IPAddress> getAllAddresses() const;
 		void setQRV(const int qrv);
 		int getQRV() const;
 		int getUnsolicitedReportInterval() const;
 		void setUnsolicitedReportInterval(int value);
 		
+		/** 
+		 * Sets the Unsolicited report interval with a handler, expressed in amount of milliseconds
+		 */
+		static int handleSetUnsolicited(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+		void add_handlers();
+
 
 	private:
 		int f_qrv; /// The Querier Robustness Variable
