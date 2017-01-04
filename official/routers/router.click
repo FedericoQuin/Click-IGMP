@@ -16,7 +16,7 @@
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
-	table::RouterInfoBase(querrier, QQIT 125, MRT 100);
+	table::RouterInfoBase(querrier);
 	reportGenerator::RouterReportGenerator(table);
 	
 	// Shared IP input path and routing table
