@@ -68,6 +68,7 @@ class RouterInfoBase : public Element {
 		*/
 		void setQQIT(unsigned int);
 		void setMRT(unsigned int);
+		int getOtherQuerierPresentInterval();
 		uint8_t getQRV();
 		/*
 		Get the QRV value. Default value is 2.

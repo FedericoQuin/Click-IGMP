@@ -223,10 +223,15 @@ void RouterInfoBase::allowQueries() {
 	queriesSuppressed = false;
 }
 
+int RouterInfoBase::getOtherQuerierPresentInterval() {
+	int qqit = QI < 128 ? QI : toTime(QI);
+	int mrt = QRI < 128 ? QRI : toTime(QRI);
+	return (QRV * (qqit*1000)) + (mrt * 100 / 2);
+}
 
 void RouterInfoBase::setQRV(uint8_t value){
 	if (value > 7){
-		value = 0;
+		value = 1;
 	}
 	QRV = value;
 }

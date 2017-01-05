@@ -94,7 +94,7 @@ void QuerierElection::handleQuery(Packet* p) {
     }
     timeoutTimer = new Timer();
     timeoutTimer->initialize(this);
-    int timeoutTime = (qrv * (qqi*1000)) + (maxRespTime * 100 / 2);
+    int timeoutTime = routerState->getOtherQuerierPresentInterval();
     timeoutTimer->schedule_after_msec(timeoutTime);
 }
 
