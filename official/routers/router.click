@@ -16,8 +16,8 @@
 elementclass Router {
 	$server_address, $client1_address, $client2_address |
 
-	table::RouterInfoBase(querrier);
-	reportGenerator::RouterReportGenerator(table);
+	routerState::RouterInfoBase(querier);
+	reportGenerator::RouterReportGenerator(routerState);
 	
 	// Shared IP input path and routing table
 	ip :: Strip(14)
@@ -45,7 +45,7 @@ elementclass Router {
 	server_arpq :: ARPQuerier($server_address)
 		-> output;
 
-	filter0::RouterMulticastFilter(1,table)
+	filter0::RouterMulticastFilter(1,routerState)
 		->server_arpq;
 
 	filter0[1]
@@ -70,7 +70,7 @@ elementclass Router {
 		// -> ToDump(dumps/allPacketsNetwork1.dump)
 		-> [1]output;
 
-	filter1::RouterMulticastFilter(2,table)
+	filter1::RouterMulticastFilter(2,routerState)
 		->client1_arpq;
 
 	filter1[1]
@@ -95,7 +95,7 @@ elementclass Router {
 		// -> ToDump(dumps/allPacketsNetwork2.dump)
 		-> [2]output;
 
-	filter2::RouterMulticastFilter(3,table)
+	filter2::RouterMulticastFilter(3,routerState)
 		->client2_arpq;
 
 	filter2[1]
@@ -203,13 +203,13 @@ elementclass Router {
 									 $client2_address:ipnet,
 									 -);
 	subnetClass[0]
-		-> QuerierElection(table, $server_address);
+		-> QuerierElection(routerState, $server_address);
 	subnetClass[1]
-		-> QuerierElection(table, $client1_address);
+		-> QuerierElection(routerState, $client1_address);
 	subnetClass[2]
-		-> QuerierElection(table, $client2_address);
+		-> QuerierElection(routerState, $client2_address);
 	subnetClass[3]
-		-> RouterQueryHandler(table, reportGenerator);
+		-> RouterQueryHandler(routerState, reportGenerator);
 
 	reportGenerator
 		-> reportSwitch::PaintSwitch();
@@ -227,7 +227,7 @@ elementclass Router {
 
 
 	igmpPacketSorter[1]
-		-> IGMPReportReceiver(INFOBASE table)
+		-> IGMPReportReceiver(INFOBASE routerState)
 
 	checker[1]
 		-> Discard
@@ -244,7 +244,7 @@ elementclass Router {
 	splitter[2]
 		->filter2;
 		
-	querrier::IGMPQueryGenerator
+	querier::IGMPQueryGenerator
 		-> pswitch::PaintSwitch[0]
 		-> SplitterQueries::Tee(3)
 
