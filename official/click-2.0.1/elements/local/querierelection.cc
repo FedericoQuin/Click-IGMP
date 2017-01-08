@@ -52,9 +52,6 @@ void QuerierElection::handleQuery(Packet* p) {
         return;
     }
 
-    // TODO unsure what to do with s flag
-    // TODO unsure to take over MRC
-
     routerState->suppressQueries();
     const uint8_t qrv = igmph->QRV;
     if (qrv != 0) {
